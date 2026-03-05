@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Sean 的雲端購書商城</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <header>
+        <h1>歡迎光臨購書網</h1>
+        
+        <form th:action="@{/search}" method="get">
+            <input type="text" name="keyword" th:value="${keyword}" placeholder="搜尋書名...">
+            <button type="submit">搜尋</button>
+        </form>
+    </header>
+
+    <main>
+        <h2>書籍清單</h2>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>書名</th>
+                    <th>作者</th>
+                    <th>價格</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="book : ${bookList}">
+                    <td th:text="${book.title}">預設標題</td>
+                    <td th:text="${book.author}">預設作者</td>
+                    <td th:text="${'NT$ ' + book.price}">0</td>
+                    <td>
+                        <a th:href="@{/book/{id}(id=${book.id})}">查看詳情</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <p th:if="${#lists.isEmpty(bookList)}">目前沒有符合條件的書籍。</p>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Sean's BookMall Project</p>
+    </footer>
+</body>
+</html>
