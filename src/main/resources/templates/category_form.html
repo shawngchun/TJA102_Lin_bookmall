@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <h2>新增/編輯分類</h2>
+    <form th:action="@{/admin/categories/save}" th:object="${category}" method="post">
+        <input type="hidden" th:field="*{id}">
+        <label>分類名稱：</label>
+        <input type="text" th:field="*{name}" required>
+        <button type="submit">儲存</button>
+    </form>
+</body>
+</html>

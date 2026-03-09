@@ -33,4 +33,14 @@ public class BookServiceImpl implements BookService {
     public List<Book> getBooksByCategory(Integer categoryId) {
         return bookRepository.findByCategoryId(categoryId);
     }
+    
+    @Override
+    public void saveBook(Book book) {
+        bookRepository.save(book);
+    }
+
+    @Override
+    public void deleteBook(Integer id) {
+        bookRepository.deleteById(id);
+    }
 }

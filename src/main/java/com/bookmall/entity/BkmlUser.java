@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name="users")
-public class User {
+public class BkmlUser {
 	
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,7 +31,7 @@ public class User {
     private String pictureUrl;
 
     // JPA 需要無參數建構子
-    public User() {
+    public BkmlUser() {
     }
 
 	public Integer getId() {

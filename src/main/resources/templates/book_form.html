@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>新增/編輯書籍</title>
+</head>
+<body>
+    <h2>書籍資訊編輯</h2>
+    <form th:action="@{/admin/book/save}" th:object="${book}" method="post">
+        <input type="hidden" th:field="*{id}">
+        
+        <p>
+            <label>書名：</label>
+            <input type="text" th:field="*{title}" required>
+        </p>
+        
+        <p>
+            <label>分類：</label>
+            <select th:field="*{category}">
+                <option value="">請選擇分類</option>
+                <option th:each="cat : ${categories}" 
+                        th:value="${cat.id}" 
+                        th:text="${cat.name}">
+                </option>
+            </select>
+        </p>
+        
+        <p>
+            <label>價格：</label>
+            <input type="number" th:field="*{price}" step="0.01" required>
+        </p>
+        
+        <p>
+            <label>庫存：</label>
+            <input type="number" th:field="*{stock}" required>
+        </p>
+        
+        <p>
+            <label>描述：</label>
+            <textarea th:field="*{description}"></textarea>
+        </p>
+        
+        <button type="submit">儲存書籍</button>
+        <a th:href="@{/}">取消</a>
+    </form>
+</body>
+</html>

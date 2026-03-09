@@ -15,4 +15,7 @@ public interface BookService {
     
     // 根據分類找書
     List<Book> getBooksByCategory(Integer categoryId);
+    
+    void saveBook(Book book);
+    void deleteBook(Integer id);
 }
