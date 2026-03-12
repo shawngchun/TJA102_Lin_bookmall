@@ -31,5 +31,6 @@ public class CustomUserDetailsService implements UserDetailsService {
                    .password(bkmlUser.getPassword())
                    .authorities(bkmlUser.getRole()) // 這裡傳入如 "ROLE_USER" 或 "ROLE_ADMIN"
                    .build();
+        // 只要是BkmlUser有的欄位，什麼亂七八糟都可以往這張身分證丟，點數、照片url...都可以
     }
 }
