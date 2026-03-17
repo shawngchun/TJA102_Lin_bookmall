@@ -1,5 +1,6 @@
 package com.bookmall.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,4 +19,7 @@ public interface BkmlUserRepository extends JpaRepository<BkmlUser, Integer> {
 
     // 透過 OAuth2 的提供者 ID 找人
     Optional<BkmlUser> findByProviderId(String providerId);
+    
+    // Spring 會自動解析為 SELECT * FROM users WHERE username LIKE %?1%
+    List<BkmlUser> findByUsernameContaining(String username);
 }

@@ -58,26 +58,26 @@ public class BookController {
         return "book_list";
     }
     
- // 顯示新增表單
-    @GetMapping("/admin/book/new")
-    public String showCreateForm(Model model) {
-        model.addAttribute("book", new Book());
-        // 這裡需要撈出所有分類供下拉選單選擇
-        model.addAttribute("categories", categoryService.getAllCategories());
-        return "book_form";
-    }
-
-    // 處理儲存動作
-    @PostMapping("/admin/book/save")
-    public String saveBook(Book book) {
-        bookService.saveBook(book);
-        return "redirect:/"; // 儲存完回首頁
-    }
-
-    // 刪除書籍
-    @GetMapping("/admin/book/delete/{id}")
-    public String deleteBook(@PathVariable Integer id) {
-        bookService.deleteBook(id);
-        return "redirect:/";
-    }
+// // 顯示新增表單
+//    @GetMapping("/admin/book/new")
+//    public String showCreateForm(Model model) {
+//        model.addAttribute("book", new Book());
+//        // 這裡需要撈出所有分類供下拉選單選擇
+//        model.addAttribute("categories", categoryService.getAllCategories());
+//        return "book_form";
+//    }
+//
+//    // 處理儲存動作
+//    @PostMapping("/admin/book/save")
+//    public String saveBook(Book book) {
+//        bookService.saveBook(book);
+//        return "redirect:/"; // 儲存完回首頁
+//    }
+//
+//    // 刪除書籍
+//    @GetMapping("/admin/book/delete/{id}")
+//    public String deleteBook(@PathVariable Integer id) {
+//        bookService.deleteBook(id);
+//        return "redirect:/";
+//    }
 }
