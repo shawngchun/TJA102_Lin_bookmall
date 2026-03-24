@@ -1,10 +1,17 @@
 package com.bookmall.service.impl;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,9 +26,17 @@ import com.bookmall.repository.BookRepository;
 import com.bookmall.repository.OrderRepository;
 import com.bookmall.service.CartService;
 import com.bookmall.service.OrderService;
+import com.bookmall.utils.EcpayUtils;
 
 @Service
 public class OrderServiceImpl implements OrderService {
+	
+	// 注入 application.properties 裡的網址
+    @Value("${ecpay.return-url}")
+    private String ecpayReturnUrl;
+
+    @Value("${ecpay.client-back-url}")
+    private String ecpayClientBackUrl;
 
     @Autowired private CartService cartService;
     @Autowired private OrderRepository orderRepository;
@@ -98,5 +113,54 @@ public class OrderServiceImpl implements OrderService {
     public List<Order> getUserOrders(String username) {
         BkmlUser user = userRepository.findByUsername(username).orElseThrow();
         return orderRepository.findByUserId(user.getId());
+    }
+    
+    @Override
+    public String generatePaymentForm(Integer orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("訂單不存在"));
+
+        // 綠界測試環境參數
+        String merchantID = "3002607";
+        String hashKey = "pwFHCqoQZGmho4w6";
+        String hashIV = "EkRm7iFT261dpevs";
+        
+        String tradeNo = "BKML" + orderId + "T" + System.currentTimeMillis()/1000; // 產生唯一訂單編號
+        String tradeDate = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new Date());
+
+        Map<String, String> params = new HashMap<>();
+        params.put("MerchantID", merchantID);
+        // 訂單編號加上時間戳，避免綠界報錯「編號重複」
+        params.put("MerchantTradeNo", tradeNo);
+//        System.out.println("========"+"BKML" + orderId + "T" + System.currentTimeMillis()/1000+"========");
+//        params.put("MerchantTradeDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")));
+        params.put("MerchantTradeDate", tradeDate);
+        params.put("PaymentType", "aio");
+        params.put("TotalAmount", String.valueOf(order.getTotalAmount().intValue())); // 綠界只收整數
+//        System.out.println("========"+String.valueOf(order.getTotalAmount().intValue())+"========");
+        params.put("TradeDesc", "BookMall 訂單付款");
+        params.put("ItemName", "網路書店書籍一批");
+        params.put("ReturnURL", ecpayReturnUrl); // 綠界通知後端的地方
+        params.put("OrderResultURL", ecpayClientBackUrl); // 使用者付完後跳回的地方
+        params.put("ChoosePayment", "ALL");
+        params.put("EncryptType", "1");
+
+        // 使用我們先前討論的 EcpayUtils 計算簽章
+        String checkMacValue = EcpayUtils.generateCheckMacValue(params, hashKey, hashIV);
+        params.put("CheckMacValue", checkMacValue);
+
+        // 產生一個隱藏表單，載入後自動 submit 跳轉到綠界
+        return buildAutoPostForm(params);
+    }
+
+    private String buildAutoPostForm(Map<String, String> params) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<form id='ecpayForm' action='https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5' method='post'>");
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            sb.append("<input type='hidden' name='").append(entry.getKey()).append("' value='").append(entry.getValue()).append("'>");
+        }
+        sb.append("</form><script>document.getElementById('ecpayForm').submit();</script>");
+        System.out.println(sb.toString());
+        return sb.toString();
     }
 }

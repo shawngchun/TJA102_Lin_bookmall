@@ -25,7 +25,7 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login/**", "/oauth2/**").permitAll()
+                .requestMatchers("/", "/login/**", "/oauth2/**", "/api/payment/callback").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
@@ -40,7 +40,15 @@ public class SecurityConfig {
                     .userService(customOAuth2UserService) // 指定我們寫的 Service
                 )
                 .defaultSuccessUrl("/home", true) // 登入成功後跳轉的地方
-            );
+            )
+            .logout(logout -> logout
+            	    .logoutUrl("/api/auth/logout") // 指定登出的 API 路徑
+            	    .logoutSuccessUrl("/") // 登出成功後導向首頁
+            	    .invalidateHttpSession(true) // 銷毀伺服器端的 Session
+            	    .clearAuthentication(true) // 清除 SecurityContext 中的認證資訊
+            	    .deleteCookies("JSESSIONID") // 刪除瀏覽器的 Cookie
+            	    .permitAll()
+            	);
 
         return http.build();
     }

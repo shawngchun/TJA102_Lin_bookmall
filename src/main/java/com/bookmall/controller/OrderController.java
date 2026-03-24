@@ -81,13 +81,19 @@ public class OrderController {
 //        return ResponseEntity.ok(orderService.getUserOrders(userDetails.getUsername()));
 //    }
 
-    @PostMapping("/{orderId}/pay")
-    public ResponseEntity<?> payOrder(@PathVariable Integer orderId) {
-        try {
-            orderService.payOrder(orderId);
-            return ResponseEntity.ok(Map.of("message", "付款成功"));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
-        }
+//    @PostMapping("/{orderId}/pay")
+//    public ResponseEntity<?> payOrder(@PathVariable Integer orderId) {
+//        try {
+//            orderService.payOrder(orderId);
+//            return ResponseEntity.ok(Map.of("message", "付款成功"));
+//        } catch (RuntimeException e) {
+//            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+//        }
+//    }
+    
+    @GetMapping(value = "/{orderId}/pay", produces = "text/html")
+    public String payOrder(@PathVariable Integer orderId) {
+        // 這裡改為呼叫產生金流表單的邏輯
+        return orderService.generatePaymentForm(orderId);
     }
 }
