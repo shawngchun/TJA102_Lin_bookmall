@@ -49,6 +49,6 @@ public class AdminUserController {
     
     @GetMapping("/search")
     public ResponseEntity<List<BkmlUser>> searchUsers(@RequestParam String keyword) {
-        return ResponseEntity.ok(adminUserService.searchUsersByUsername(keyword));
+        return ResponseEntity.ok(adminUserService.searchUsersByEmail(keyword));
     }
 }

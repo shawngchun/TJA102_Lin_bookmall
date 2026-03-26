@@ -1,4 +1,4 @@
-package com.bookmall.service.impl;
+package com.bookmall.security;
 
 import java.util.Optional;
 
@@ -19,7 +19,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Autowired
     private BkmlUserRepository userRepository;
 
-    @Override
+    @Override                 // OAuth2UserRequest：裝著 Google 給的 access_token（這是一張通行證）
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         // 1. 呼叫父類別方法，取得 Google 回傳的原始用戶資料
         OAuth2User oAuth2User = super.loadUser(userRequest);
@@ -35,14 +35,14 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         processUser(email, name, picture, provider, providerId);
 
         return new DefaultOAuth2User(
-                oAuth2User.getAuthorities(),
+                oAuth2User.getAuthorities(),  // 日後如果要進階的話，要改從DB拿資料，現在是先限制OAuth2用戶不能當admin才沒事
                 oAuth2User.getAttributes(),
                 "email" // <--- 這裡強制指定 email 欄位為 NameAttribute
         );
     }
 
     private void processUser(String email, String name, String picture, String provider, String providerId) {
-        Optional<BkmlUser> userOpt = userRepository.findByUsername(email);
+        Optional<BkmlUser> userOpt = userRepository.findByEmail(email);
 
         if (userOpt.isEmpty()) {
             // 資料庫沒這個人，幫他註冊

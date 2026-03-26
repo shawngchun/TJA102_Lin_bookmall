@@ -2,7 +2,6 @@ package com.bookmall.controller;
 
 import java.security.Principal;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,10 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bookmall.dto.CheckoutRequest;
-import com.bookmall.entity.BkmlUser;
 import com.bookmall.entity.Order;
-import com.bookmall.repository.BkmlUserRepository;
-import com.bookmall.repository.OrderRepository;
 import com.bookmall.service.OrderService;
 
 @RestController
@@ -28,18 +24,12 @@ public class OrderController {
     @Autowired
     private OrderService orderService; // 只注入 Service
     
-    @Autowired
-    private BkmlUserRepository bkmlUserRepository; // 只注入 Service
-    
-    @Autowired
-    private OrderRepository orderRepository; // 只注入 Service
-    
     @PostMapping("/checkout")
     public ResponseEntity<Order> checkout(
             Principal principal, 
             @RequestBody CheckoutRequest request) {
         
-        // principal.getName() 會根據你的 OAuth2 配置回傳 Email 或 Username
+        // principal.getName() 會根據你的 OAuth2 配置回傳 Email
         Order order = orderService.checkout(principal.getName(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(order);
     }
@@ -62,17 +52,12 @@ public class OrderController {
     
     @GetMapping("/my")
     public ResponseEntity<List<Order>> getMyOrders(java.security.Principal principal) {
-        // 1. principal.getName() 在 OAuth2 會回傳 email，在傳統登入也會回傳 username
-        String username = principal.getName();
-        System.out.println(username);
-
-        // 2. 透過 username 找到資料庫裡的 user
-        BkmlUser user = bkmlUserRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用戶不存在"));
-
-        // 3. 查詢該使用者的所有訂單
-        List<Order> orders = orderRepository.findByUserId(user.getId());
-
+        // 從 principal 取得 email (即 UserDetails 中的 username)
+        String email = principal.getName();
+        
+        // 直接呼叫 Service 層取得結果
+        List<Order> orders = orderService.getOrdersByEmail(email);
+        
         return ResponseEntity.ok(orders);
     }
 

@@ -2,8 +2,6 @@ package com.bookmall.service.impl;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -45,13 +43,13 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional // 事務現在在這裡，保護整個業務流程
-    public Order checkout(String username, CheckoutRequest request) {
+    public Order checkout(String email, CheckoutRequest request) {
         // 1. 取得用戶
-        BkmlUser user = userRepository.findByUsername(username)
+        BkmlUser user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("用戶不存在"));
 
         // 2. 取得並檢查購物車
-        List<CartItemDto> cartItems = cartService.getCartDetails(username);
+        List<CartItemDto> cartItems = cartService.getCartDetails(email);
         if (cartItems.isEmpty()) {
             throw new RuntimeException("購物車是空的");
         }
@@ -92,7 +90,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 5. 儲存並清空
         Order savedOrder = orderRepository.save(order);
-        cartService.clearCart(username);
+        cartService.clearCart(email);
         
         return savedOrder;
     }
@@ -110,8 +108,12 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<Order> getUserOrders(String username) {
-        BkmlUser user = userRepository.findByUsername(username).orElseThrow();
+    public List<Order> getOrdersByEmail(String email) {
+        // 1. 透過 email 找到用戶
+        BkmlUser user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("用戶不存在"));
+
+        // 2. 回傳該用戶的訂單清單
         return orderRepository.findByUserId(user.getId());
     }
     
@@ -153,6 +155,7 @@ public class OrderServiceImpl implements OrderService {
         return buildAutoPostForm(params);
     }
 
+    // private 僅提供給 OrderServiceImpl 使用的內部方法
     private String buildAutoPostForm(Map<String, String> params) {
         StringBuilder sb = new StringBuilder();
         sb.append("<form id='ecpayForm' action='https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5' method='post'>");

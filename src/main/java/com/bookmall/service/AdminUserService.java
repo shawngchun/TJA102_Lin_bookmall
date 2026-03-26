@@ -22,5 +22,5 @@ public interface AdminUserService {
     /**
      * 根據使用者名稱進行模糊搜尋 (預留功能)
      */
-    List<BkmlUser> searchUsersByUsername(String username);
+    List<BkmlUser> searchUsersByEmail(String eamil);
 }

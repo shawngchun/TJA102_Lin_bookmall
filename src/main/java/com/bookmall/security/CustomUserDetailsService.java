@@ -20,14 +20,14 @@ public class CustomUserDetailsService implements UserDetailsService {
     private BkmlUserRepository bkmlUserRepository;
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         // 1. 從資料庫中搜尋使用者，如果找不到就噴出異常
-        BkmlUser bkmlUser = bkmlUserRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("找不到使用者: " + username));
+        BkmlUser bkmlUser = bkmlUserRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("找不到使用者: " + email));
 
         // 2. 建立並回傳 Spring Security 的 User 物件 (UserDetails 的實作類)
         // 注意：這裡使用了 org.springframework.security.core.userdetails.User 的靜態方法
-        return User.withUsername(bkmlUser.getUsername())
+        return User.withUsername(bkmlUser.getEmail())
                    .password(bkmlUser.getPassword())
                    .authorities(bkmlUser.getRole()) // 這裡傳入如 "ROLE_USER" 或 "ROLE_ADMIN"
                    .build();

@@ -39,8 +39,8 @@ public class AdminUserServiceImpl implements AdminUserService {
     }
 
     @Override
-    public List<BkmlUser> searchUsersByUsername(String username) {
+    public List<BkmlUser> searchUsersByEmail(String email) {
         // 這裡可以呼叫 Repository 的模糊查詢方法，例如 findByUsernameContaining
-        return userRepository.findByUsernameContaining(username);
+        return userRepository.findByEmailContaining(email);
     }
 }

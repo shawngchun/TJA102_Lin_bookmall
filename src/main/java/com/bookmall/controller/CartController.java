@@ -32,7 +32,7 @@ public class CartController {
             @RequestParam Integer bookId,
             @RequestParam(defaultValue = "1") Integer quantity) {
 
-        // 從 Security 直接拿到當前登入的 username
+        // 從 Security 直接拿到當前登入的 username，這裡從UserDetails拿的username實際上是BkmlUser的email
         String username = userDetails.getUsername();
         cartService.addBookToCart(username, bookId, quantity);
 
@@ -53,12 +53,14 @@ public class CartController {
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Integer bookId) {
         
+    	// 這裡從UserDetails拿的username實際上是BkmlUser的email
         cartService.removeFromCart(userDetails.getUsername(), bookId);
         return Map.of("message", "已移除書籍 " + bookId);
     }
     
     @GetMapping
     public List<CartItemDto> getMyFullCart(@AuthenticationPrincipal UserDetails userDetails) {
+    	// 這裡從UserDetails拿的username實際上是BkmlUser的email
         return cartService.getCartDetails(userDetails.getUsername());
     }
 }

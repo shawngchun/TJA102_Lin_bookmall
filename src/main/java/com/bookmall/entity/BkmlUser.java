@@ -29,6 +29,13 @@ public class BkmlUser {
 
     @Column(name = "picture_url")
     private String pictureUrl;
+    
+    // 在 BkmlUser 類別中新增
+    @Column(name = "reset_token")
+    private String resetToken;
+
+    @Column(name = "token_expiration")
+    private java.time.LocalDateTime tokenExpiration;
 
     // JPA 需要無參數建構子
     public BkmlUser() {
@@ -98,6 +105,20 @@ public class BkmlUser {
 		this.pictureUrl = pictureUrl;
 	}
     
-    
+	public String getResetToken() {
+	    return resetToken;
+	}
+
+	public void setResetToken(String resetToken) {
+	    this.resetToken = resetToken;
+	}
+
+	public java.time.LocalDateTime getTokenExpiration() {
+	    return tokenExpiration;
+	}
+
+	public void setTokenExpiration(java.time.LocalDateTime tokenExpiration) {
+	    this.tokenExpiration = tokenExpiration;
+	}
 	
 }

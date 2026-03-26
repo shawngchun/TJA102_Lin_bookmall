@@ -9,7 +9,7 @@ import com.bookmall.entity.Category;
 
 @Controller
 @RequestMapping("/admin/categories") // 統一的前綴路徑
-public class CategoryController {
+public class AdminCategoryController {
 
     @Autowired
     private CategoryService categoryService;
