@@ -7,8 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Service;
 
 import com.bookmall.dto.AuthResponse;
@@ -17,6 +19,9 @@ import com.bookmall.dto.RegisterRequest;
 import com.bookmall.entity.BkmlUser;
 import com.bookmall.repository.BkmlUserRepository;
 import com.bookmall.service.AuthService;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -29,6 +34,10 @@ public class AuthServiceImpl implements AuthService {
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
+	
+	// 新增注入
+	@Autowired
+	private SecurityContextRepository securityContextRepository;
 
 	@Override
 	public AuthResponse register(RegisterRequest request) {
@@ -47,22 +56,52 @@ public class AuthServiceImpl implements AuthService {
 		return new AuthResponse("註冊成功！", true, user.getUsername());
 	}
 
-	@Override
-	public AuthResponse login(LoginRequest request) {
-		// 1. 將前端傳來的帳密封裝成 Authentication 標記 (尚未認證)
-		UsernamePasswordAuthenticationToken unauthenticatedToken = new UsernamePasswordAuthenticationToken(
-				request.getEmail(), request.getPassword());
+//	@Override
+//	public AuthResponse login(LoginRequest request) {
+//		// 1. 將前端傳來的帳密封裝成 Authentication 標記 (尚未認證)
+//		UsernamePasswordAuthenticationToken unauthenticatedToken = new UsernamePasswordAuthenticationToken(
+//				request.getEmail(), request.getPassword());
+//
+//		// 2. 手動委派給主管 (AuthenticationManager) 進行認證
+//		// 此步驟會自動呼叫 UserDetailsService 與 PasswordEncoder 進行比對
+//		Authentication authentication = authenticationManager.authenticate(unauthenticatedToken);
+//
+//		// 3. 認證成功後，將結果存入 SecurityContextHolder
+//		// 這是手動模式下讓 Session 生效的關鍵步驟
+//		SecurityContextHolder.getContext().setAuthentication(authentication);
+//
+//		return new AuthResponse("登入成功", true, authentication.getName());
+//	}
+	
+//	@Override
+//	public AuthResponse login(LoginRequest request, HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
+//		// 1. 認證
+//        Authentication authentication = authenticationManager.authenticate(
+//            new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+//        );
+//
+//        // 2. 設定 Context
+//        SecurityContext context = SecurityContextHolder.createEmptyContext();
+//        context.setAuthentication(authentication);
+//        SecurityContextHolder.setContext(context);
+//
+//        // 3. 儲存 Context 到 Session
+//        // 這步會讓 JSESSIONID 與目前的認證資訊綁定
+//        securityContextRepository.saveContext(context, servletRequest, servletResponse);
+//
+//        return new AuthResponse("登入成功", true, authentication.getName());
+//	}
+	
 
-		// 2. 手動委派給主管 (AuthenticationManager) 進行認證
-		// 此步驟會自動呼叫 UserDetailsService 與 PasswordEncoder 進行比對
-		Authentication authentication = authenticationManager.authenticate(unauthenticatedToken);
-
-		// 3. 認證成功後，將結果存入 SecurityContextHolder
-		// 這是手動模式下讓 Session 生效的關鍵步驟
-		SecurityContextHolder.getContext().setAuthentication(authentication);
-
-		return new AuthResponse("登入成功", true, authentication.getName());
-	}
+	    @Override
+	    public Authentication authenticate(String email, String password) {
+	        // Service 只要負責「確認這個人是真的」
+	        // 它不需要知道 Session 怎麼存，也不需要知道 Request 長怎樣
+	        return authenticationManager.authenticate(
+	            new UsernamePasswordAuthenticationToken(email, password)
+	        );
+	    }
+	
 
 	@Override
 	public AuthResponse processForgotPassword(String email) {

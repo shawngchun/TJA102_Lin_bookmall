@@ -203,8 +203,8 @@
 
         <form action="/login" method="POST" id="loginForm">
             <div class="form-group">
-                <label for="username">電子郵件 / 帳號</label>
-                <input type="text" id="username" name="username" required placeholder="請輸入帳號">
+                <label for="email">電子郵件</label>
+                <input type="text" id="email" name="email" required placeholder="請輸入email">
             </div>
             <div class="form-group">
                 <label for="password">密碼</label>
@@ -228,29 +228,69 @@
     </div>
 
     <script>
-        /* JS: 邏輯處理 */
         document.addEventListener('DOMContentLoaded', () => {
-            const params = new URLSearchParams(window.location.search);
+            const loginForm = document.getElementById('loginForm');
             const statusBox = document.getElementById('status-message');
+            const btnSubmit = loginForm.querySelector('.btn-submit');
 
-            // 1. 檢查 URL 參數以顯示狀態
-            if (params.has('error')) {
-                statusBox.innerText = '帳號或密碼錯誤，請重新輸入';
-                statusBox.className = 'error';
-                statusBox.style.display = 'block';
-            } else if (params.has('logout')) {
-                statusBox.innerText = '您已成功登出系統';
-                statusBox.className = 'success';
+            // 處理 URL 參數 (登出/錯誤提示)
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('logout')) {
+                showStatus('您已成功登出系統', 'success');
+            }
+
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault(); // 攔截傳統提交，避免頁面跳轉
+
+                // 1. 取得資料並封裝成物件 (注意：欄位名稱需與後端 LoginRequest 一致)
+                const formData = new FormData(loginForm);
+                const data = {
+                    email: formData.get('email'), // 你提到信箱即帳號，對應 LoginRequest 的 email 欄位
+                    password: formData.get('password')
+                };
+
+                // 2. UI 狀態更新
+                btnSubmit.innerText = '正在驗證...';
+                btnSubmit.disabled = true;
+                statusBox.style.display = 'none';
+
+                try {
+                    // 3. 發送 Fetch 請求到 REST API
+                    const response = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        window.location.href = '/successLogin.html';
+                        // showStatus('登入成功！正在導向...', 'success');
+                        // 登入成功，延遲一秒跳轉至首頁或會員中心
+                        // setTimeout(() => window.location.href = '/index.html', 1000);
+                    } else {
+                        showStatus(result.message || '登入失敗，請檢查帳密', 'error');
+                        resetBtn();
+                    }
+                } catch (error) {
+                    showStatus('伺服器連線異常，請稍後再試', 'error');
+                    resetBtn();
+                }
+            });
+
+            function showStatus(msg, type) {
+                statusBox.innerText = msg;
+                statusBox.className = type; // 'error' 或 'success'
                 statusBox.style.display = 'block';
             }
 
-            // 2. 表單提交簡單互動
-            const form = document.getElementById('loginForm');
-            form.addEventListener('submit', () => {
-                const btn = form.querySelector('.btn-submit');
-                btn.innerText = '正在驗證...';
-                btn.style.opacity = '0.7';
-            });
+            function resetBtn() {
+                btnSubmit.innerText = '會員登入';
+                btnSubmit.disabled = false;
+            }
         });
     </script>
 </body>
