@@ -1,0 +1,358 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { Heart, Droplets, Mountain, Zap, RefreshCw, Play, CheckCircle2, XCircle, BookOpen } from 'lucide-react';
+
+// === 化學題庫資料 ===
+// s: 'soluble' (可溶), 'insoluble' (沉澱)
+// r: 規則與口訣
+const chemistryData = [
+  { f: "NaCl", n: "氯化鈉", s: "soluble", r: "1A族 (如 Na⁺) 化合物必溶。" },
+  { f: "KNO3", n: "硝酸鉀", s: "soluble", r: "硝酸根 (NO₃⁻) 與 1A族 化合物必溶。" },
+  { f: "AgCl", n: "氯化銀", s: "insoluble", r: "氯離子遇 Ag⁺ 沉澱 (白色)。【口訣：氯溴碘遇 銀、鉛、亞汞 沉澱】" },
+  { f: "PbI2", n: "碘化鉛", s: "insoluble", r: "碘離子遇 Pb²⁺ 沉澱 (金黃色)。【口訣：氯溴碘遇 銀、鉛、亞汞 沉澱】" },
+  { f: "AgBr", n: "溴化銀", s: "insoluble", r: "溴離子遇 Ag⁺ 沉澱 (淡黃色)。" },
+  { f: "BaSO4", n: "硫酸鋇", s: "insoluble", r: "硫酸根遇 Ba²⁺ 沉澱 (白色)。【口訣：硫酸根遇 鋇、鍶、鉛、鈣 沉澱】" },
+  { f: "CaSO4", n: "硫酸鈣", s: "insoluble", r: "硫酸根遇 Ca²⁺ 微溶 (常視為沉澱)。" },
+  { f: "MgSO4", n: "硫酸鎂", s: "soluble", r: "硫酸根除了 鋇、鍶、鉛、鈣 外，其餘多為可溶 (Mg²⁺ 可溶)。" },
+  { f: "CaCO3", n: "碳酸鈣", s: "insoluble", r: "碳酸根除 1A族 與 NH₄⁺ 外，皆為沉澱 (白色)。" },
+  { f: "Na2CO3", n: "碳酸鈉", s: "soluble", r: "碳酸根遇 1A族 (Na⁺) 可溶。" },
+  { f: "Mg(OH)2", n: "氫氧化鎂", s: "insoluble", r: "氫氧根除 1A族、NH₄⁺、鋇、鍶 外，皆為沉澱。" },
+  { f: "NaOH", n: "氫氧化鈉", s: "soluble", r: "氫氧根遇 1A族 (Na⁺) 可溶。" },
+  { f: "Ba(OH)2", n: "氫氧化鋇", s: "soluble", r: "氫氧根遇 Ba²⁺ 可溶 (強鹼)。" },
+  { f: "Fe(OH)3", n: "氫氧化鐵", s: "insoluble", r: "氫氧根遇 Fe³⁺ 沉澱 (紅褐色)。" },
+  { f: "CuS", n: "硫化銅", s: "insoluble", r: "硫離子除 1A, 2A, NH₄⁺ 外皆沉澱 (CuS 為黑色)。" },
+  { f: "ZnS", n: "硫化鋅", s: "insoluble", r: "硫離子除 1A, 2A, NH₄⁺ 外皆沉澱 (ZnS 為白色)。" },
+  { f: "Na2S", n: "硫化鈉", s: "soluble", r: "硫離子遇 1A族 可溶。" },
+  { f: "Ag2CrO4", n: "鉻酸銀", s: "insoluble", r: "鉻酸根遇 Ag⁺ 沉澱 (磚紅色)。【口訣：鉻酸根遇 鋇(黃)、鉛(黃)、銀(磚紅) 沉澱】" },
+  { f: "PbCrO4", n: "鉻酸鉛", s: "insoluble", r: "鉻酸根遇 Pb²⁺ 沉澱 (黃色)。" },
+  { f: "K2CrO4", n: "鉻酸鉀", s: "soluble", r: "1A族化合物必溶。" },
+  { f: "NH4Cl", n: "氯化銨", s: "soluble", r: "銨根 (NH₄⁺) 化合物必溶。" },
+  { f: "CH3COOK", n: "醋酸鉀", s: "soluble", r: "醋酸根 (CH₃COO⁻) 化合物必溶。" },
+  { f: "AgI", n: "碘化銀", s: "insoluble", r: "碘離子遇 Ag⁺ 沉澱 (黃色)。" },
+  { f: "PbCl2", n: "氯化鉛", s: "insoluble", r: "氯離子遇 Pb²⁺ 沉澱 (白色，熱水中可溶)。" },
+  { f: "K2SO4", n: "硫酸鉀", s: "soluble", r: "1A族化合物必溶。" },
+  { f: "Zn(OH)2", n: "氫氧化鋅", s: "insoluble", r: "氫氧根除 1A族、NH₄⁺、鋇、鍶 外，皆為沉澱。" },
+  { f: "BaCO3", n: "碳酸鋇", s: "insoluble", r: "碳酸根除 1A族 與 NH₄⁺ 外，皆為沉澱。" },
+  { f: "(NH4)2S", n: "硫化銨", s: "soluble", r: "銨根 (NH₄⁺) 化合物必溶。" },
+  { f: "CuSO4", n: "硫酸銅", s: "soluble", r: "硫酸根除了 鋇、鍶、鉛、鈣 外皆可溶。" },
+  { f: "Ag2S", n: "硫化銀", s: "insoluble", r: "硫離子除 1A, 2A, NH₄⁺ 外皆沉澱 (黑色)。" },
+  { f: "Ca3(PO4)2", n: "磷酸鈣", s: "insoluble", r: "磷酸根除 1A族 與 NH₄⁺ 外，皆為沉澱 (骨骼主要成分)。" }
+];
+
+// 將化學式中的數字轉為下標的工具函數
+const formatFormula = (formula) => {
+  return formula.replace(/(\d+)/g, '<sub>$1</sub>');
+};
+
+export default function App() {
+  const [gameState, setGameState] = useState('menu'); // 'menu', 'playing', 'gameover'
+  const [score, setScore] = useState(0);
+  const [lives, setLives] = useState(3);
+  const [streak, setStreak] = useState(0);
+  const [maxStreak, setMaxStreak] = useState(0);
+  
+  const [currentCompound, setCurrentCompound] = useState(null);
+  const [feedback, setFeedback] = useState(null); // null, 'correct', or 包含錯誤資訊的物件
+  const [mistakes, setMistakes] = useState([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const pickNextCompound = useCallback(() => {
+    let nextComp;
+    do {
+      const randomIndex = Math.floor(Math.random() * chemistryData.length);
+      nextComp = chemistryData[randomIndex];
+    } while (currentCompound && nextComp.f === currentCompound.f); // 避免連續出現同一題
+    
+    setCurrentCompound(nextComp);
+    setFeedback(null);
+    setIsProcessing(false);
+  }, [currentCompound]);
+
+  const startGame = () => {
+    setScore(0);
+    setLives(3);
+    setStreak(0);
+    setMaxStreak(0);
+    setMistakes([]);
+    setGameState('playing');
+    pickNextCompound();
+  };
+
+  const handleAnswer = (answer) => {
+    if (isProcessing) return;
+    setIsProcessing(true);
+
+    const isCorrect = answer === currentCompound.s;
+
+    if (isCorrect) {
+      // 答對邏輯
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+      setMaxStreak(Math.max(maxStreak, newStreak));
+      
+      // 計分：基礎10分，連擊加成最高額外10分
+      const bonus = Math.min(newStreak, 10);
+      setScore(prev => prev + 10 + bonus);
+      
+      setFeedback('correct');
+      
+      // 快速進入下一題
+      setTimeout(() => {
+        pickNextCompound();
+      }, 700);
+    } else {
+      // 答錯邏輯
+      setStreak(0);
+      
+      // 記錄錯誤以便複習
+      if (!mistakes.some(m => m.f === currentCompound.f)) {
+        setMistakes(prev => [...prev, currentCompound]);
+      }
+
+      setFeedback({
+        type: 'wrong',
+        compound: currentCompound,
+        userAnswer: answer
+      });
+    }
+  };
+
+  const handleAcknowledgeMistake = () => {
+    const newLives = lives - 1;
+    setLives(newLives);
+    
+    if (newLives <= 0) {
+      setGameState('gameover');
+    } else {
+      pickNextCompound();
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans flex flex-col items-center py-8 px-4">
+      
+      {/* 頂部導航 / 標題 */}
+      <header className="w-full max-w-md mb-8 text-center">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent flex items-center justify-center gap-2">
+          <BookOpen className="text-blue-400" />
+          高中化學沉澱表
+        </h1>
+        <p className="text-slate-400 mt-2 text-sm">直覺記憶大挑戰</p>
+      </header>
+
+      {/* === 主選單畫面 === */}
+      {gameState === 'menu' && (
+        <div className="w-full max-w-md bg-slate-800 rounded-2xl p-8 shadow-2xl border border-slate-700 text-center animate-fade-in">
+          <div className="bg-slate-700/50 p-6 rounded-xl mb-8">
+            <h2 className="text-xl font-bold text-white mb-4">遊戲規則</h2>
+            <ul className="text-slate-300 text-left space-y-3 text-sm">
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                <span>畫面上會出現一個化學物質，請快速判斷它是 <strong>可溶</strong> 還是 <strong>沉澱</strong>。</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                <span>連續答對可獲得連擊加分 (Streak Bonus)。</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Heart className="w-5 h-5 text-rose-400 shrink-0" />
+                <span>你有 3 次容錯機會，答錯會顯示正確的沉澱規則幫助記憶。</span>
+              </li>
+            </ul>
+          </div>
+          
+          <button 
+            onClick={startGame}
+            className="w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 rounded-xl font-bold text-lg text-white shadow-lg transform transition active:scale-95 flex items-center justify-center gap-2"
+          >
+            <Play fill="currentColor" /> 開始挑戰
+          </button>
+        </div>
+      )}
+
+      {/* === 遊戲進行畫面 === */}
+      {gameState === 'playing' && currentCompound && (
+        <div className="w-full max-w-md flex flex-col items-center w-full">
+          
+          {/* 狀態列 */}
+          <div className="w-full flex justify-between items-center mb-6 px-2">
+            <div className="flex gap-1">
+              {[...Array(3)].map((_, i) => (
+                <Heart 
+                  key={i} 
+                  className={`w-6 h-6 transition-all duration-300 ${i < lives ? 'text-rose-500 fill-rose-500' : 'text-slate-700'}`} 
+                />
+              ))}
+            </div>
+            
+            <div className="flex items-center gap-4">
+              {streak > 1 && (
+                <div className="flex items-center gap-1 text-orange-400 font-bold animate-pulse">
+                  <Zap className="w-4 h-4 fill-orange-400" /> {streak} 連擊
+                </div>
+              )}
+              <div className="text-xl font-mono font-bold text-white">
+                分數: {score}
+              </div>
+            </div>
+          </div>
+
+          {/* 題目卡片 */}
+          <div className="w-full relative perspective-1000 mb-8">
+            <div className={`w-full bg-slate-800 rounded-3xl p-10 shadow-2xl border-2 flex flex-col items-center justify-center min-h-[280px] transition-all duration-300
+              ${feedback === 'correct' ? 'border-emerald-500 bg-emerald-900/20 scale-[1.02]' : 'border-slate-700'}
+            `}>
+              
+              {feedback === 'correct' && (
+                <div className="absolute top-4 right-4 text-emerald-400 animate-bounce">
+                  <CheckCircle2 className="w-8 h-8" />
+                </div>
+              )}
+
+              <h2 
+                className="text-6xl font-black text-white mb-4 tracking-wider drop-shadow-lg"
+                dangerouslySetInnerHTML={{ __html: formatFormula(currentCompound.f) }}
+              />
+              <p className="text-2xl text-slate-400 font-medium tracking-widest">{currentCompound.n}</p>
+            </div>
+          </div>
+
+          {/* 互動按鈕 */}
+          <div className="w-full grid grid-cols-2 gap-4">
+            <button
+              onClick={() => handleAnswer('soluble')}
+              disabled={isProcessing}
+              className={`py-6 rounded-2xl font-bold text-2xl flex flex-col items-center justify-center gap-2 transition-all
+                ${isProcessing ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 active:scale-95 shadow-lg'}
+                bg-blue-600/20 text-blue-400 border border-blue-500 hover:bg-blue-600 hover:text-white
+              `}
+            >
+              <Droplets className="w-8 h-8 mb-1" />
+              可溶
+            </button>
+            <button
+              onClick={() => handleAnswer('insoluble')}
+              disabled={isProcessing}
+              className={`py-6 rounded-2xl font-bold text-2xl flex flex-col items-center justify-center gap-2 transition-all
+                ${isProcessing ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 active:scale-95 shadow-lg'}
+                bg-orange-600/20 text-orange-400 border border-orange-500 hover:bg-orange-600 hover:text-white
+              `}
+            >
+              <Mountain className="w-8 h-8 mb-1" />
+              沉澱
+            </button>
+          </div>
+
+          {/* 錯誤回饋 Modal */}
+          {feedback && feedback.type === 'wrong' && (
+            <div className="fixed inset-0 bg-slate-900/90 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
+              <div className="bg-slate-800 border-2 border-rose-500 rounded-3xl p-8 max-w-md w-full shadow-2xl">
+                <div className="flex items-center gap-3 text-rose-500 mb-6">
+                  <XCircle className="w-10 h-10" />
+                  <h3 className="text-3xl font-bold">答錯了！</h3>
+                </div>
+                
+                <div className="bg-slate-900/50 rounded-xl p-6 mb-6">
+                  <div className="text-center mb-4">
+                    <span 
+                      className="text-4xl font-bold text-white mr-3"
+                      dangerouslySetInnerHTML={{ __html: formatFormula(feedback.compound.f) }}
+                    />
+                    <span className="text-2xl text-slate-300">是 <strong className={feedback.compound.s === 'soluble' ? 'text-blue-400' : 'text-orange-400'}>
+                      {feedback.compound.s === 'soluble' ? '可溶' : '沉澱'}
+                    </strong></span>
+                  </div>
+                  
+                  <div className="border-t border-slate-700 pt-4 mt-2">
+                    <p className="text-sm text-slate-400 mb-1">記憶規則：</p>
+                    <p className="text-lg text-emerald-300 font-medium leading-relaxed">
+                      {feedback.compound.r}
+                    </p>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={handleAcknowledgeMistake}
+                  className="w-full py-4 bg-slate-100 text-slate-900 font-bold rounded-xl text-lg hover:bg-white transition-colors"
+                >
+                  記住了，繼續挑戰
+                </button>
+              </div>
+            </div>
+          )}
+
+        </div>
+      )}
+
+      {/* === 遊戲結束畫面 === */}
+      {gameState === 'gameover' && (
+        <div className="w-full max-w-md bg-slate-800 rounded-3xl p-8 shadow-2xl border border-slate-700 animate-fade-in flex flex-col items-center">
+          <h2 className="text-4xl font-black text-white mb-2">遊戲結束</h2>
+          <p className="text-slate-400 mb-8">你的化學直覺訓練完成！</p>
+          
+          <div className="w-full grid grid-cols-2 gap-4 mb-8">
+            <div className="bg-slate-900 rounded-2xl p-4 flex flex-col items-center justify-center border border-slate-700">
+              <span className="text-sm text-slate-400 mb-1">最終分數</span>
+              <span className="text-4xl font-bold text-blue-400">{score}</span>
+            </div>
+            <div className="bg-slate-900 rounded-2xl p-4 flex flex-col items-center justify-center border border-slate-700">
+              <span className="text-sm text-slate-400 mb-1">最高連擊</span>
+              <span className="text-4xl font-bold text-orange-400">{maxStreak}</span>
+            </div>
+          </div>
+
+          {/* 錯誤複習區 */}
+          {mistakes.length > 0 && (
+            <div className="w-full mb-8">
+              <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
+                <BookOpen className="w-5 h-5" /> 需要複習的觀念
+              </h3>
+              <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                {mistakes.map((m, idx) => (
+                  <div key={idx} className="bg-slate-700/40 p-4 rounded-xl border border-slate-600/50">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="font-bold text-lg" dangerouslySetInnerHTML={{ __html: formatFormula(m.f) }} />
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${m.s === 'soluble' ? 'bg-blue-500/20 text-blue-300' : 'bg-orange-500/20 text-orange-300'}`}>
+                        {m.s === 'soluble' ? '可溶' : '沉澱'}
+                      </span>
+                    </div>
+                    <p className="text-sm text-emerald-200">{m.r}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          <button 
+            onClick={startGame}
+            className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 rounded-xl font-bold text-lg text-white shadow-lg transform transition active:scale-95 flex items-center justify-center gap-2"
+          >
+            <RefreshCw /> 再玩一次
+          </button>
+        </div>
+      )}
+
+      {/* 自定義滾動條樣式 (Tailwind 內嵌) */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(30, 41, 59, 0.5); 
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(71, 85, 105, 0.8); 
+          border-radius: 10px;
+        }
+        .animate-fade-in {
+          animation: fadeIn 0.4s ease-out forwards;
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}} />
+
+    </div>
+  );
+}

@@ -93,7 +93,7 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
     
- // 在 SecurityConfig 類別內新增
+ // 在 SecurityConfig 類別內新增，將認證放入持久層
     @Bean
     public SecurityContextRepository securityContextRepository() {
         return new HttpSessionSecurityContextRepository();

@@ -59,8 +59,8 @@ public class AuthController {
         Authentication authentication = authService.authenticate(request.getEmail(), request.getPassword());
 
         // 2. 在 Web 層處理 Context (這是 Controller 應該知道的環境操作)
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(authentication);
+        SecurityContext context = SecurityContextHolder.createEmptyContext();  // 空白身分證
+        context.setAuthentication(authentication);  // 填寫空白身分證
         SecurityContextHolder.setContext(context);
 
         // 3. 在 Web 層處理持久化 (因為這需要 request/response)

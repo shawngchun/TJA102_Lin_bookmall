@@ -10,13 +10,13 @@ public class BkmlUser {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String username;
 
     // 配合資料庫設計，密碼設為可為空
     private String password;
 
-    @Column(unique = true)
+    @Column(nullable = false, unique = true, length = 100)
     private String email;
 
     private String role; // 預設為 ROLE_USER

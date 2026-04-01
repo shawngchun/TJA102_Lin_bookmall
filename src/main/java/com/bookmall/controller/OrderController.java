@@ -52,7 +52,7 @@ public class OrderController {
     
     @GetMapping("/my")
     public ResponseEntity<List<Order>> getMyOrders(java.security.Principal principal) {
-        // 從 principal 取得 email (即 UserDetails 中的 username)
+        // 從 principal 取得 email (即 UserDetails 中的 username)，但它不是UserDetails，比較像是Authentication
         String email = principal.getName();
         
         // 直接呼叫 Service 層取得結果
