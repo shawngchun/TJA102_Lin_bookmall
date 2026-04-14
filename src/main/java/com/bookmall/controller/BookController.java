@@ -51,9 +51,9 @@ public class BookController {
      * 獲取單一書籍詳情
      * GET http://localhost:8080/api/books/{id}
      */
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getBookDetail(@PathVariable("id") Integer id) {
-        Book book = bookService.getBookById(id);
+    @GetMapping("/category/{categoryId}")
+    public ResponseEntity<?> getBookDetail(@PathVariable("categoryId") Integer categoryId) {
+    	List<BookListDTO> book = bookService.getBooksByCategory(categoryId);
         if (book == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                                  .body(Map.of("message", "找不到該書籍"));

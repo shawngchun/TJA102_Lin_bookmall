@@ -34,8 +34,12 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public List<Book> getBooksByCategory(Integer categoryId) {
-        return bookRepository.findByCategoryId(categoryId);
+    public List<BookListDTO> getBooksByCategory(Integer categoryId) {
+        List<Book> books = bookRepository.findByCategoryId(categoryId);
+        
+        return books.stream()
+        			.map(this::convertToDTO)
+        			.collect(Collectors.toList());
     }
     
     @Override

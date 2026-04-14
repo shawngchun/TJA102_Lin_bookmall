@@ -16,7 +16,7 @@ public interface BookService {
     List<Book> searchBooks(String keyword);
     
     // 根據分類找書
-    List<Book> getBooksByCategory(Integer categoryId);
+    List<BookListDTO> getBooksByCategory(Integer categoryId);
     
     List<BookListDTO> getAllBooksForClient();
     

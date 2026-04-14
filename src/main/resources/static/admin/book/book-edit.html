@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <title>編輯書籍 - 管理員後台</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            max-width: 700px;
+            margin: auto;
+            line-height: 1.6;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            resize: vertical;
+        }
+
+        .image-preview-container {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px dashed #ccc;
+            text-align: center;
+        }
+
+        #current-img {
+            max-width: 150px;
+            border-radius: 4px;
+            display: none;
+            margin: 0 auto 10px;
+        }
+
+        .btn-container {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-save {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            cursor: pointer;
+            border-radius: 4px;
+            flex: 1;
+        }
+
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 12px 25px;
+            border-radius: 4px;
+            text-align: center;
+            flex: 1;
+        }
+
+        .btn-save:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>編輯書籍詳情</h1>
+
+    <div id="edit-form">
+        <div class="form-group">
+            <label>書名</label>
+            <input type="text" id="title" placeholder="請輸入書名">
+        </div>
+
+        <div class="form-group">
+            <label>作者</label>
+            <input type="text" id="author" placeholder="請輸入作者名稱">
+        </div>
+
+        <div style="display: flex; gap: 20px;">
+            <div class="form-group" style="flex: 1;">
+                <label>價格 (Price)</label>
+                <input type="number" id="price" step="0.01" placeholder="0.00">
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label>庫存 (Stock)</label>
+                <input type="number" id="stock" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label>書籍分類</label>
+                <select id="category-id">
+                    <option value="">-- 請選擇分類 --</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>書籍描述</label>
+            <textarea id="description" rows="5" placeholder="請輸入書籍簡介..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>書籍封面</label>
+            <div class="image-preview-container">
+                <img id="current-img" alt="封面預覽">
+                <input type="file" id="image-file" accept="image/*" onchange="previewNewImage(this)">
+                <small style="color: #666;">若不修改圖片，請留空即可</small>
+            </div>
+        </div>
+
+        <div class="btn-container">
+            <button class="btn-save" onclick="updateBook()">儲存所有變更 (PATCH)</button>
+            <a href="books.html" class="btn-cancel">取消並返回</a>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/admin/books';
+        const urlParams = new URLSearchParams(window.location.search);
+        const bookId = urlParams.get('id');
+
+        // 預覽新選取的圖片
+        function previewNewImage(input) {
+            const preview = document.getElementById('current-img');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        //  頁面載入時，先抓取所有分類清單
+        async function loadCategories() {
+            try {
+                // 假設你有一個獲取全部分類的 API (例如 GET /api/admin/categories)
+                const response = await fetch('/api/admin/categories');
+                const categories = await response.json();
+
+                const select = document.getElementById('category-id');
+                categories.forEach(cat => {
+                    const opt = document.createElement('option');
+                    opt.value = cat.id;
+                    opt.textContent = cat.name;
+                    select.appendChild(opt);
+                });
+            } catch (error) {
+                console.error('載入分類失敗:', error);
+            }
+        }
+
+        // 1. 初始化：載入該書籍的所有欄位
+        async function loadBookData() {
+            if (!bookId) return alert('找不到書籍 ID');
+
+            try {
+                const response = await fetch(`${API_BASE}/${bookId}`);
+                if (!response.ok) throw new Error('無法取得書籍資料');
+
+                const book = await response.json();
+
+                // 填入所有欄位
+                document.getElementById('title').value = book.title || '';
+                document.getElementById('author').value = book.author || '';
+                document.getElementById('price').value = book.price || 0;
+                document.getElementById('stock').value = book.stock || 0;
+                document.getElementById('description').value = book.description || '';
+                // 如果書籍本來就有分類，設定下拉選單的值
+                if (book.category && book.category.id) {
+                    document.getElementById('category-id').value = book.category.id;
+                }
+
+                if (book.pictureUrl) {
+                    const imgElement = document.getElementById('current-img');
+                    imgElement.src = book.pictureUrl;
+                    imgElement.style.display = 'block';
+                }
+            } catch (error) {
+                console.error(error);
+                alert('載入失敗');
+            }
+        }
+
+        // 2. 執行更新：收集所有欄位並送出 PATCH
+        async function updateBook() {
+            const fileInput = document.getElementById('image-file');
+
+            // 建立要更新的資料物件
+            const updates = {
+                title: document.getElementById('title').value,
+                author: document.getElementById('author').value,
+                price: parseFloat(document.getElementById('price').value),
+                stock: parseInt(document.getElementById('stock').value),
+                description: document.getElementById('description').value,
+                categoryId: parseInt(document.getElementById('category-id').value)
+            };
+
+            try {
+                // 如果有上傳新圖片，先處理 ImgBB 上傳
+                if (fileInput.files.length > 0) {
+                    console.log('上傳新圖片中...');
+                    updates.pictureUrl = await uploadToImgBB(fileInput.files[0]);
+                }
+
+                // 送出局部更新請求
+                const response = await fetch(`${API_BASE}/${bookId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updates)
+                });
+
+                if (response.ok) {
+                    alert('書籍資料已成功更新');
+                    window.location.href = 'books.html';
+                } else {
+                    const errorData = await response.json();
+                    alert('更新失敗：' + (errorData.message || '未知錯誤'));
+                }
+            } catch (error) {
+                console.error(error);
+                alert('儲存過程發生錯誤');
+            }
+        }
+
+        async function uploadToImgBB(file) {
+            const formData = new FormData();
+            formData.append('image', file);
+            const response = await fetch('/api/images/upload', { method: 'POST', body: formData });
+            if (!response.ok) throw new Error('圖片上傳失敗');
+            const result = await response.json();
+            return result.url;
+        }
+
+        window.onload = async () => {
+            await loadCategories(); // 必須先載入選項
+            await loadBookData();   // 再載入書籍資料進行回填
+        };
+    </script>
+</body>
+
+</html>

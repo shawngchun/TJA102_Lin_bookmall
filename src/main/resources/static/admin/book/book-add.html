@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <title>新增書籍 - 管理員後台</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: auto;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        .btn-save {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>新增書籍</h1>
+    <div class="form-group">
+        <label>書名</label><input type="text" id="title">
+    </div>
+    <div class="form-group">
+        <label>圖片上傳 (ImgBB)</label>
+        <input type="file" id="image-file" accept="image/*">
+    </div>
+    <button class="btn-save" onclick="saveBook()">確認新增</button>
+
+    <script>
+        // 引用先前定義的 uploadToImgBB 邏輯
+        async function saveBook() {
+            const fileInput = document.getElementById('image-file');
+            let imageUrl = '';
+
+            if (fileInput.files.length > 0) {
+                imageUrl = await uploadToImgBB(fileInput.files[0]);
+            }
+
+            const bookData = {
+                title: document.getElementById('title').value,
+                pictureUrl: imageUrl
+                // ... 其他欄位
+            };
+
+            const response = await fetch('/api/admin/books', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bookData)
+            });
+
+            if (response.ok) {
+                alert('新增成功');
+                window.location.href = 'books.html';
+            }
+        }
+
+        async function uploadToImgBB(file) {
+            const formData = new FormData();
+            formData.append('image', file);
+            const response = await fetch('/api/images/upload', { method: 'POST', body: formData });
+            const result = await response.json();
+            return result.url;
+        }
+    </script>
+</body>
+
+</html>

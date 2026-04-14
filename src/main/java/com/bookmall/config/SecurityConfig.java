@@ -34,7 +34,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
             	// 開放首頁、靜態資源與所有 API 認證接口 (包含忘記密碼)
                 .requestMatchers("/", "/login.html", "/register.html", "/successRegister.html", "/index.html", "/static/**", "/css/**", "/js/**", "/forgot-password.html", "/reset-password.html").permitAll()
-                .requestMatchers("/api/auth/**", "/api/payment/callback", "/api/auth/forgot-password", "/api/books/**").permitAll()
+                .requestMatchers("/api/auth/**", "/api/payment/callback", "/api/auth/forgot-password", "/api/books/**", "/api/categories/**").permitAll()
 //                .requestMatchers("/", "/login/**", "/oauth2/**", "/api/payment/callback").permitAll()
                 .requestMatchers("/api/admin/**", "/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()

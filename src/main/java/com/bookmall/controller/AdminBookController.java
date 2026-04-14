@@ -23,6 +23,12 @@ public class AdminBookController {
     public ResponseEntity<List<Book>> listBooks() {
         return ResponseEntity.ok(adminBookService.getAllBooks());
     }
+    
+    // 用id找書
+    @GetMapping("/{bookId}")
+    public ResponseEntity<Book> findBookById(@PathVariable Integer bookId) {
+    	return ResponseEntity.ok(adminBookService.getBookById(bookId));
+    }
 
     // 2. 新增 (POST)
     @PostMapping
@@ -48,5 +54,15 @@ public class AdminBookController {
     public ResponseEntity<?> remove(@PathVariable Integer id) {
         adminBookService.deleteBook(id);
         return ResponseEntity.ok(Map.of("message", "書籍已成功刪除"));
+    }
+    
+    @PatchMapping("/{id}")
+    public ResponseEntity<Book> partialUpdate(
+            @PathVariable("id") Integer id, 
+            @RequestBody Map<String, Object> updates) {
+        
+        // 呼叫 Service 執行局部更新邏輯
+        Book updatedBook = adminBookService.partialUpdateBook(id, updates);
+        return ResponseEntity.ok(updatedBook);
     }
 }

@@ -1,6 +1,7 @@
 package com.bookmall.service;
 
 import java.util.List;
+import java.util.Map;
 
 import com.bookmall.entity.Book;
 
@@ -19,4 +20,8 @@ public interface AdminBookService {
     
     // 下架/刪除書籍
     void deleteBook(Integer id);
+    
+    Book partialUpdateBook(Integer id, Map<String, Object> updates);
+    
+    Book getBookById(Integer id);
 }

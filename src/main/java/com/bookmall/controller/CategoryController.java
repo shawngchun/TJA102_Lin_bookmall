@@ -8,7 +8,7 @@ import com.bookmall.entity.Category;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/categories") // 注意：這裡沒有 /admin
+@RequestMapping("/api/categories")
 public class CategoryController {
 
     @Autowired

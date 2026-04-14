@@ -34,6 +34,19 @@
         .stock-input {
             width: 60px;
         }
+
+        .edit-link {
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 0.85em;
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .edit-link:hover {
+            text-decoration: underline;
+            color: #0056b3;
+        }
     </style>
 </head>
 
@@ -50,8 +63,8 @@
                 <th>書名</th>
                 <th>作者</th>
                 <th>價格</th>
-                <th>庫存 (可直接修改)</th>
-                <th>操作</th>
+                <th>資料更新</th>
+                <th>刪除</th>
             </tr>
         </thead>
         <tbody id="book-body">
@@ -79,7 +92,7 @@
         // 渲染表格 (將 List<Book> 投影至 HTML)
         function renderTable(books) {
             const tbody = document.getElementById('book-body');
-            tbody.innerHTML = ''; // 清空舊資料
+            tbody.innerHTML = '';
 
             books.forEach(book => {
                 const tr = document.createElement('tr');
@@ -90,7 +103,9 @@
                     <td>$${book.price}</td>
                     <td>
                         <input type="number" class="stock-input" value="${book.stock}" 
-                               onchange="updateStock(${book.id}, this.value)">
+                            onchange="updateStock(${book.id}, this.value)">
+                        <br>
+                        <a href="book-edit.html?id=${book.id}" class="edit-link">編輯詳細資料</a>
                     </td>
                     <td>
                         <button class="action-btn delete-btn" onclick="deleteBook(${book.id})">刪除</button>
