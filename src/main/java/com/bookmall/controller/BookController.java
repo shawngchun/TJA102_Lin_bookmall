@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.bookmall.dto.BookListDTO;
 import com.bookmall.entity.Book;
 import com.bookmall.entity.Category;
 import com.bookmall.service.BookService;
@@ -35,18 +36,14 @@ public class BookController {
      * GET http://localhost:8080/api/books
      */
     @GetMapping
-    public ResponseEntity<?> getAllBooks() {
-        List<Book> books = bookService.getAllBooks();
+    public ResponseEntity<List<BookListDTO>> getAllBooks() {
+        // 直接向 Service 要求 DTO 列表
+        List<BookListDTO> books = bookService.getAllBooksForClient();
         
-        // 偵錯用：在控制台印出數量
-        System.out.println("Debug: 找到 " + (books != null ? books.size() : 0) + " 本書");
-
-        if (books == null || books.isEmpty()) {
-            // 這裡回傳的是 String，因為有 <?> 所以不會報錯
-            return ResponseEntity.ok("目前資料庫中沒有書籍資料");
+        if (books.isEmpty()) {
+            return ResponseEntity.noContent().build();
         }
 
-        // 這裡回傳的是 List<Book>
         return ResponseEntity.ok(books);
     }
 

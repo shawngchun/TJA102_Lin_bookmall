@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幻象書屋 - 建立新帳號</title>
+    <style>
+        /* 延用 login.html 的設計語言 */
+        :root {
+            --primary: #2c3e50;
+            --accent: #d35400;
+            --bg: #fdfaf6;
+            --text: #34495e;
+            --error: #c0392b;
+            --success: #27ae60;
+        }
+
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text);
+        }
+
+        .register-card {
+            background: #ffffff;
+            padding: 2.5rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 400px;
+            border-top: 5px solid var(--accent);
+            /* 註冊頁改用溫暖橘色邊框區分 */
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            margin: 0;
+            color: var(--primary);
+        }
+
+        .header p {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-top: 0.5rem;
+        }
+
+        #status-message {
+            padding: 0.8rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+            display: none;
+            text-align: center;
+        }
+
+        .error {
+            background-color: #fdeaea;
+            color: var(--error);
+            border: 1px solid var(--error);
+        }
+
+        .success {
+            background-color: #eafaf1;
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1.5px solid #eee;
+            border-radius: 8px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 0.9rem;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .btn-submit:hover {
+            opacity: 0.9;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+        }
+
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="register-card">
+        <div class="header">
+            <h1>加入幻象書屋</h1>
+            <p>開啟您的個人藏書閣</p>
+        </div>
+
+        <div id="status-message"></div>
+
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="username">使用者名稱</label>
+                <input type="text" id="username" name="username" required placeholder="希望我們怎麼稱呼您">
+            </div>
+            <div class="form-group">
+                <label for="email">電子郵件 (登入帳號)</label>
+                <input type="email" id="email" name="email" required placeholder="example@mail.com">
+            </div>
+            <div class="form-group">
+                <label for="password">設定密碼</label>
+                <input type="password" id="password" name="password" required placeholder="至少 6 位字元">
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">確認密碼</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="再次輸入密碼">
+            </div>
+            <button type="submit" class="btn-submit">立即註冊</button>
+        </form>
+
+        <div class="footer">
+            已經有帳號了？ <a href="/login.html">點此登入</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const registerForm = document.getElementById('registerForm');
+            const statusBox = document.getElementById('status-message');
+            const btnSubmit = registerForm.querySelector('.btn-submit');
+
+            registerForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const formData = new FormData(registerForm);
+                const password = formData.get('password');
+                const confirmPassword = formData.get('confirmPassword');
+
+                // 1. 前端初步驗證：檢查密碼一致性
+                if (password !== confirmPassword) {
+                    showStatus('兩次輸入的密碼不一致', 'error');
+                    return;
+                }
+
+                // 2. 封裝資料 (對應後端 RegisterRequest DTO)
+                const data = {
+                    username: formData.get('username'),
+                    email: formData.get('email'),
+                    password: password
+                };
+
+                // 3. UI 狀態更新
+                btnSubmit.innerText = '註冊處理中...';
+                btnSubmit.disabled = true;
+                statusBox.style.display = 'none';
+
+                try {
+                    // 4. 發送請求至 AuthController
+                    const response = await fetch('/api/auth/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        showStatus('註冊成功！3秒後自動導向登入頁面...', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/successRegister.html';
+                        }, 3000);
+                    } else {
+                        // 顯示後端回傳的錯誤訊息 (例如：該帳號已被註冊)
+                        showStatus(result.message || '註冊失敗，請檢查輸入內容', 'error');
+                        resetBtn();
+                    }
+                } catch (error) {
+                    showStatus('連線伺服器失敗，請稍後再試', 'error');
+                    resetBtn();
+                }
+            });
+
+            function showStatus(msg, type) {
+                statusBox.innerText = msg;
+                statusBox.className = type;
+                statusBox.style.display = 'block';
+            }
+
+            function resetBtn() {
+                btnSubmit.innerText = '立即註冊';
+                btnSubmit.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>

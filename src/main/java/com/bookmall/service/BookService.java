@@ -1,6 +1,8 @@
 package com.bookmall.service;
 
 import java.util.List;
+
+import com.bookmall.dto.BookListDTO;
 import com.bookmall.entity.Book;
 
 public interface BookService {
@@ -15,6 +17,8 @@ public interface BookService {
     
     // 根據分類找書
     List<Book> getBooksByCategory(Integer categoryId);
+    
+    List<BookListDTO> getAllBooksForClient();
     
     void saveBook(Book book);
     void deleteBook(Integer id);

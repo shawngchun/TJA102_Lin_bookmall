@@ -28,7 +28,7 @@ public class Order {
     private BigDecimal totalAmount;
 
     @Column(name = "status")
-    private Integer status = 0; // 0:待付款, 1:已付款, 2:已出貨, 3:已取消
+    private Integer status = 0; // 0:待付款, 1:已付款, 2:已取消
 
     @Column(name = "receiver_name", length = 50)
     private String receiverName;
@@ -40,7 +40,7 @@ public class Order {
     private LocalDateTime createdAt;
 
     // 一對多關聯：一個訂單擁有多個明細
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "order")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "order") //@OneToMany 預設是 FetchType.LAZY
     private List<OrderItem> items;
 
 	public Integer getId() {

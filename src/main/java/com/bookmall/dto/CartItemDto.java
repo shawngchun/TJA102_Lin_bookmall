@@ -18,13 +18,13 @@ public class CartItemDto {
         this.bookId = book.getId();
         this.title = book.getTitle();
         this.price = book.getPrice();
+        // 處理分類名稱，防止 Category 為 null 時噴錯
+        if (book.getCategory() != null) {
+        	this.categoryName = book.getCategory().getName();
+        }
         this.quantity = quantity;
         this.subtotal = book.getPrice().multiply(new BigDecimal(quantity));
         
-        // 處理分類名稱，防止 Category 為 null 時噴錯
-        if (book.getCategory() != null) {
-            this.categoryName = book.getCategory().getName();
-        }
     }
 
 	public Integer getBookId() {

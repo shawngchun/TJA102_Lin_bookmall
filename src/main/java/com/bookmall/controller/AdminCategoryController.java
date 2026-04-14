@@ -1,37 +1,38 @@
 package com.bookmall.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.bookmall.service.CategoryService;
 import com.bookmall.entity.Category;
+import java.util.List;
+import java.util.Map;
 
-@Controller
-@RequestMapping("/admin/categories") // 統一的前綴路徑
+@RestController
+@RequestMapping("/api/admin/categories") // 改為 RESTful 風格的 API 路徑
 public class AdminCategoryController {
 
     @Autowired
-    private CategoryService categoryService;
+    private CategoryService categoryService; //
 
-    // 顯示清單
+    // 1. 取得所有分類 (對應原本的 listCategories)
     @GetMapping
-    public String listCategories(Model model) {
-        model.addAttribute("categories", categoryService.getAllCategories());
-        return "category_list";
+    public ResponseEntity<List<Category>> getAllCategories() {
+        return ResponseEntity.ok(categoryService.getAllCategories()); //
     }
 
-    // 顯示新增表單
-    @GetMapping("/new")
-    public String showForm(Model model) {
-        model.addAttribute("category", new Category());
-        return "category_form";
+    // 2. 新增分類 (對應原本的 saveCategory)
+    // 注意：這裡改用 @RequestBody 接收 JSON 數據
+    @PostMapping
+    public ResponseEntity<?> saveCategory(@RequestBody Category category) {
+        categoryService.saveCategory(category); //
+        return ResponseEntity.ok(Map.of("message", "分類儲存成功"));
     }
 
-    // 儲存
-    @PostMapping("/save")
-    public String saveCategory(@ModelAttribute("category") Category category) {
-        categoryService.saveCategory(category);
-        return "redirect:/admin/categories";
+    // 3. 刪除分類 (新增的功能，對應 Service 中的 deleteCategory)
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteCategory(@PathVariable Integer id) {
+        categoryService.deleteCategory(id); //
+        return ResponseEntity.ok(Map.of("message", "分類已刪除"));
     }
 }

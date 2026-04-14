@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <title>使用者管理 - 管理員後台</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        .search-section {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #eee;
+        }
+
+        .role-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
+        .role-admin {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .role-user {
+            background: #3498db;
+            color: white;
+        }
+
+        .delete-btn {
+            color: #e74c3c;
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+
+        .user-pic {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>使用者管理控制台</h1>
+
+    <div class="search-section">
+        <input type="text" id="search-keyword" placeholder="輸入 Email 搜尋...">
+        <button onclick="searchUsers()">搜尋 (GET /search)</button>
+        <button onclick="fetchUsers()">顯示全部</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>使用者名稱</th>
+                <th>Email</th>
+                <th>來源 (Provider)</th>
+                <th>目前角色</th>
+                <th>變更角色</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="user-body"></tbody>
+    </table>
+
+    <script>
+        const API_BASE = '/api/admin/users';
+
+        // 1. 取得所有使用者 (對應 AdminUserController.listAllUsers)
+        async function fetchUsers() {
+            try {
+                const response = await fetch(API_BASE);
+                const users = await response.json();
+                renderTable(users);
+            } catch (error) {
+                console.error('Fetch error:', error);
+            }
+        }
+
+        // 2. 搜尋使用者 (對應 AdminUserController.searchUsers)
+        async function searchUsers() {
+            const keyword = document.getElementById('search-keyword').value;
+            if (!keyword) return;
+
+            const response = await fetch(`${API_BASE}/search?keyword=${encodeURIComponent(keyword)}`);
+            const users = await response.json();
+            renderTable(users);
+        }
+
+        // 渲染表格 (將 BkmlUser 實體投影至 UI)
+        function renderTable(users) {
+            const tbody = document.getElementById('user-body');
+            tbody.innerHTML = '';
+            users.forEach(user => {
+                const tr = document.createElement('tr');
+                const roleClass = user.role === 'ROLE_ADMIN' ? 'role-admin' : 'role-user';
+
+                tr.innerHTML = `
+                    <td>${user.id}</td>
+                    <td>
+                        <img src="${user.pictureUrl || 'https://via.placeholder.com/30'}" class="user-pic">
+                        ${user.username}
+                    </td>
+                    <td>${user.email}</td>
+                    <td><strong>${user.provider || 'LOCAL'}</strong></td>
+                    <td><span class="role-badge ${roleClass}">${user.role}</span></td>
+                    <td>
+                        <select onchange="changeRole(${user.id}, this.value)">
+                            <option value="">切換權限</option>
+                            <option value="ROLE_USER">設為一般用戶</option>
+                            <option value="ROLE_ADMIN">設為管理員</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="delete-btn" onclick="deleteUser(${user.id})">刪除使用者</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 3. 修改角色 (對應 AdminUserController.changeRole)
+        async function changeRole(id, newRole) {
+            if (!newRole) return;
+            if (!confirm(`確定將該用戶改為 ${newRole} 嗎？`)) return;
+
+            const response = await fetch(`${API_BASE}/${id}/role`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ role: newRole }) // 這裡對應 Payload Map<String, String>
+            });
+
+            if (response.ok) {
+                alert('權限已更新');
+                fetchUsers();
+            } else {
+                const errorMsg = await response.text();
+                alert('修改失敗：' + errorMsg);
+            }
+        }
+
+        // 4. 刪除使用者 (對應 AdminUserController.removeUser)
+        async function deleteUser(id) {
+            if (!confirm('此動作不可逆，確定要刪除該使用者嗎？')) return;
+
+            const response = await fetch(`${API_BASE}/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                alert('刪除成功');
+                fetchUsers();
+            }
+        }
+
+        window.onload = fetchUsers;
+    </script>
+</body>
+
+</html>

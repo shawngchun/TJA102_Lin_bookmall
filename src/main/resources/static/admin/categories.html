@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <title>分類管理 - 管理員後台</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        table {
+            width: 50%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+
+        .delete-btn {
+            color: red;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>分類管理控制台</h1>
+
+    <div class="form-section">
+        <h3>新增分類</h3>
+        <input type="text" id="category-name" placeholder="請輸入分類名稱">
+        <button onclick="addCategory()">儲存分類 (POST)</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>分類名稱</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="category-body"></tbody>
+    </table>
+
+    <script>
+        const API_BASE = '/api/admin/categories';
+
+        // 1. 獲取清單
+        async function fetchCategories() {
+            const response = await fetch(API_BASE);
+            const categories = await response.json();
+            const tbody = document.getElementById('category-body');
+            tbody.innerHTML = '';
+            categories.forEach(cat => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${cat.id}</td>
+                    <td>${cat.name}</td>
+                    <td><span class="delete-btn" onclick="deleteCategory(${cat.id})">刪除</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 2. 新增分類
+        async function addCategory() {
+            const nameInput = document.getElementById('category-name');
+            const name = nameInput.value;
+            if (!name) return alert('請輸入名稱');
+
+            const response = await fetch(API_BASE, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name }) // 對應 Category.java 的屬性
+            });
+
+            if (response.ok) {
+                nameInput.value = '';
+                fetchCategories();
+            }
+        }
+
+        // 3. 刪除分類
+        async function deleteCategory(id) {
+            if (!confirm('確定刪除？')) return;
+            const response = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
+            if (response.ok) fetchCategories();
+        }
+
+        window.onload = fetchCategories;
+    </script>
+</body>
+
+</html>

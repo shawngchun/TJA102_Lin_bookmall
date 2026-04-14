@@ -33,10 +33,10 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
             	// 開放首頁、靜態資源與所有 API 認證接口 (包含忘記密碼)
-                .requestMatchers("/", "/login.html", "/index.html", "/static/**", "/css/**", "/js/**").permitAll()
-                .requestMatchers("/api/auth/**", "/api/payment/callback").permitAll()
+                .requestMatchers("/", "/login.html", "/register.html", "/successRegister.html", "/index.html", "/static/**", "/css/**", "/js/**", "/forgot-password.html", "/reset-password.html").permitAll()
+                .requestMatchers("/api/auth/**", "/api/payment/callback", "/api/auth/forgot-password", "/api/books/**").permitAll()
 //                .requestMatchers("/", "/login/**", "/oauth2/**", "/api/payment/callback").permitAll()
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/admin/**", "/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             // 開啟 Http Basic 支援，Postman 的認證才會被讀取
@@ -55,7 +55,7 @@ public class SecurityConfig {
                 .userInfoEndpoint(userInfo -> userInfo
                     .userService(customOAuth2UserService) // 指定我們寫的 Service
                 )
-                .defaultSuccessUrl("/home.html", true)
+                .defaultSuccessUrl("/index.html", true)
                 /*    登入成功後跳轉的地方，最一開始的時候是http://localhost:8080/login/oauth2/code/google
                  *    原因： 這是 Spring Security 內建的 OAuth2LoginAuthenticationFilter 專門用來接收
                  *    Google 回傳「授權碼（Authorization Code）」的窗口。如果你在 Google cloud 改成 /home.html
@@ -72,8 +72,8 @@ public class SecurityConfig {
                     .securityContextRepository(securityContextRepository())
                 )
             .logout(logout -> logout
-            	    .logoutUrl("/api/auth/logout") // 指定登出的 API 路徑
-            	    .logoutSuccessUrl("/") // 登出成功後導向首頁
+            	    .logoutUrl("/api/logout") // 指定登出的 API 路徑
+            	    .logoutSuccessUrl("/login.html?logout=true") // 登出成功後導向首頁
             	    .invalidateHttpSession(true) // 銷毀伺服器端的 Session
             	    .clearAuthentication(true) // 清除 SecurityContext 中的認證資訊
             	    .deleteCookies("JSESSIONID") // 刪除瀏覽器的 Cookie

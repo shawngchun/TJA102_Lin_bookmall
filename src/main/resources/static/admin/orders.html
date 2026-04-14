@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <title>訂單管理中心 - 管理員後台</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        h1,
+        h2 {
+            color: #2c3e50;
+        }
+
+        /* 篩選區塊 */
+        .filter-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border: 1px solid #dee2e6;
+        }
+
+        .filter-group {
+            display: inline-block;
+            margin-right: 15px;
+            margin-bottom: 10px;
+        }
+
+        /* 表格樣式 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        th,
+        td {
+            border: 1px solid #dee2e6;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f1f3f5;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* 狀態標籤 */
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .status-0 {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        /* 待付款 */
+        .status-1 {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        /* 已付款 */
+        .status-2 {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        /* 已出貨 */
+        .status-3 {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* 已取消 */
+
+        /* 分頁控制 */
+        .pagination {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        button {
+            cursor: pointer;
+            padding: 8px 16px;
+            border: 1px solid #007bff;
+            background: white;
+            color: #007bff;
+            border-radius: 4px;
+        }
+
+        button:hover:not(:disabled) {
+            background: #007bff;
+            color: white;
+        }
+
+        button:disabled {
+            border-color: #ccc;
+            color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* 明細區塊 (Master-Detail) */
+        #detail-section {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background: #fff;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .close-btn {
+            float: right;
+            color: #666;
+            cursor: pointer;
+            font-size: 1.5em;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>訂單管理控制台</h1>
+
+    <div class="filter-section">
+        <div class="filter-group">
+            <label>訂單狀態：</label>
+            <select id="filter-status">
+                <option value="">全部狀態</option>
+                <option value="0">待付款 (0)</option>
+                <option value="1">已付款 (1)</option>
+                <option value="2">已取消 (2)</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>日期區間：</label>
+            <input type="datetime-local" id="filter-start">
+            至
+            <input type="datetime-local" id="filter-end">
+        </div>
+        <button onclick="currentPage=0; fetchOrders()">執行搜尋</button>
+    </div>
+
+    <table id="order-table">
+        <thead>
+            <tr>
+                <th>訂單 ID</th>
+                <th>用戶 ID</th>
+                <th>總金額</th>
+                <th>收件人</th>
+                <th>目前狀態</th>
+                <th>建立時間</th>
+                <th>操作面板</th>
+            </tr>
+        </thead>
+        <tbody id="order-body">
+        </tbody>
+    </table>
+
+    <div class="pagination">
+        <button onclick="changePage(-1)" id="prev-btn">上一頁</button>
+        <span id="page-info">第 1 頁</span>
+        <button onclick="changePage(1)" id="next-btn">下一頁</button>
+    </div>
+
+    <div id="detail-section">
+        <span class="close-btn" onclick="closeDetail()">&times;</span>
+        <h2>訂單明細 #<span id="detail-order-id"></span></h2>
+        <table id="detail-table">
+            <thead>
+                <tr>
+                    <th>明細 ID</th>
+                    <th>書籍 ID</th>
+                    <th>購買單價</th>
+                    <th>數量</th>
+                    <th>小計</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="detail-body">
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const ORDER_API = '/api/admin/orders';
+        const ITEM_API = '/api/admin/order-items';
+        const BOOK_API = '/api/books';
+
+        let currentPage = 0;
+        const pageSize = 10;
+
+        const statusMap = { 0: '待付款', 1: '已付款', 2: '已取消' };
+
+        // 格式化時間 (解決 T 字元問題並符合 yyyy-MM-dd HH:mm:ss)
+        function formatToBackend(val) {
+            if (!val) return null;
+            return val.replace('T', ' ') + ':00';
+        }
+
+        // 1. 抓取訂單主表數據
+        async function fetchOrders() {
+            const status = document.getElementById('filter-status').value;
+            const start = formatToBackend(document.getElementById('filter-start').value);
+            const end = formatToBackend(document.getElementById('filter-end').value);
+
+            let url;
+            if (start && end) {
+                // 使用日期搜尋接口
+                url = `${ORDER_API}/search?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}&page=${currentPage}&size=${pageSize}`;
+                if (status) url += `&status=${status}`;
+            } else {
+                // 使用一般列表接口
+                url = `${ORDER_API}?page=${currentPage}&size=${pageSize}`;
+                if (status) url += `&status=${status}`;
+            }
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json(); // 解析 Spring Data Page 物件
+                renderOrderTable(data.content);
+                updatePagination(data);
+            } catch (error) {
+                console.error('訂單抓取失敗:', error);
+            }
+        }
+
+        // 2. 渲染主表
+        function renderOrderTable(orders) {
+            const tbody = document.getElementById('order-body');
+            tbody.innerHTML = '';
+            orders.forEach(order => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${order.id}</td>
+                    <td>${order.userId}</td>
+                    <td>$${order.totalAmount}</td>
+                    <td>${order.receiverName}</td>
+                    <td><span class="status-badge status-${order.status}">${statusMap[order.status]}</span></td>
+                    <td>${order.createdAt ? order.createdAt.replace('T', ' ') : '-'}</td>
+                    <td>
+                        <button onclick="showDetail(${order.id})">查看明細</button>
+                        <select onchange="updateOrderStatus(${order.id}, this.value)">
+                            <option value="">快速更換狀態</option>
+                            <option value="0">待付款</option>
+                            <option value="1">已付款</option>
+                            <option value="2">取消訂單</option>
+                        </select>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 3. 抓取並顯示明細 (Master-Detail 連動)
+        async function showDetail(orderId) {
+            try {
+                const response = await fetch(`${ITEM_API}/order/${orderId}`);
+                const items = await response.json(); // 這裡拿到的是 OrderItemDTO 清單
+
+                document.getElementById('detail-section').style.display = 'block';
+                document.getElementById('detail-order-id').innerText = orderId;
+
+                const tbody = document.getElementById('detail-body');
+                tbody.innerHTML = '';
+
+                items.forEach(item => {
+                    const tr = document.createElement('tr');
+                    // 直接讀取 item.bookTitle，不需要額外的 fetch
+                    tr.innerHTML = `
+                <td>${item.id}</td>
+                <td>${item.bookId} / <strong>${item.bookTitle}</strong></td>
+                <td>$${item.currentPrice}</td>
+                <td>${item.quantity}</td>
+                <td>$${item.subtotal.toFixed(2)}</td>
+                <td>
+                    <button style="color:red; border-color:red" onclick="deleteOrderItem(${item.id}, ${orderId})">刪除</button>
+                </td>
+            `;
+                    tbody.appendChild(tr);
+                });
+
+                document.getElementById('detail-section').scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                alert('無法載入訂單明細');
+            }
+        }
+
+        // 4. 更新訂單狀態 (PATCH)
+        async function updateOrderStatus(orderId, newStatus) {
+            if (!newStatus) return;
+            const response = await fetch(`${ORDER_API}/${orderId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: parseInt(newStatus) })
+            });
+            if (response.ok) fetchOrders();
+        }
+
+        // 5. 刪除特定明細
+        async function deleteOrderItem(itemId, orderId) {
+            if (!confirm('確定刪除此筆明細？這不會自動更新訂單總金額，請手動確認。')) return;
+            const response = await fetch(`${ITEM_API}/${itemId}`, { method: 'DELETE' });
+            if (response.ok) showDetail(orderId);
+        }
+
+        // 6. 分頁控制
+        function updatePagination(data) {
+            document.getElementById('page-info').innerText = `第 ${data.number + 1} / ${data.totalPages} 頁`;
+            document.getElementById('prev-btn').disabled = data.first;
+            document.getElementById('next-btn').disabled = data.last;
+        }
+
+        function changePage(delta) {
+            currentPage += delta;
+            fetchOrders();
+        }
+
+        function closeDetail() {
+            document.getElementById('detail-section').style.display = 'none';
+        }
+
+        window.onload = fetchOrders;
+    </script>
+</body>
+
+</html>

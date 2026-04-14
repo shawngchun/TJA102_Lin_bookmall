@@ -225,6 +225,9 @@
         <div class="footer">
             尚未加入？ <a href="/register.html">建立新帳號</a>
         </div>
+        <div class="footer">
+            忘記密碼？ <a href="/forgot-password.html">重新設定密碼</a>
+        </div>
     </div>
 
     <script>
@@ -267,7 +270,7 @@
                     const result = await response.json();
 
                     if (response.ok && result.success) {
-                        window.location.href = '/successLogin.html';
+                        window.location.href = '/index.html';
                         // showStatus('登入成功！正在導向...', 'success');
                         // 登入成功，延遲一秒跳轉至首頁或會員中心
                         // setTimeout(() => window.location.href = '/index.html', 1000);

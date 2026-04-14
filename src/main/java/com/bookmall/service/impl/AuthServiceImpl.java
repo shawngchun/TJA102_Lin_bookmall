@@ -7,21 +7,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Service;
 
 import com.bookmall.dto.AuthResponse;
-import com.bookmall.dto.LoginRequest;
 import com.bookmall.dto.RegisterRequest;
 import com.bookmall.entity.BkmlUser;
 import com.bookmall.repository.BkmlUserRepository;
 import com.bookmall.service.AuthService;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import com.bookmall.service.EmailService;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -38,6 +33,9 @@ public class AuthServiceImpl implements AuthService {
 	// 新增注入
 	@Autowired
 	private SecurityContextRepository securityContextRepository;
+	
+	@Autowired
+	private EmailService emailService; // 注入新建立的服務
 
 	@Override
 	public AuthResponse register(RegisterRequest request) {
@@ -51,6 +49,7 @@ public class AuthServiceImpl implements AuthService {
 		user.setUsername(request.getUsername());
 		user.setEmail(request.getEmail());
 		user.setPassword(passwordEncoder.encode(request.getPassword()));
+		user.setRole("ROLE_USER");
 
 		userRepository.save(user);
 		return new AuthResponse("註冊成功！", true, user.getUsername());
@@ -103,23 +102,42 @@ public class AuthServiceImpl implements AuthService {
 	    }
 	
 
-	@Override
-	public AuthResponse processForgotPassword(String email) {
-		return userRepository.findByEmail(email).map(user -> {
-	        // 1. 產生 UUID 作為 Token
-	        String token = UUID.randomUUID().toString();
-	        user.setResetToken(token);
-	        
-	        // 2. 設定過期時間 (例如 15 分鐘後)
-	        user.setTokenExpiration(LocalDateTime.now().plusMinutes(15));
-	        userRepository.save(user);
+//	@Override
+//	public AuthResponse processForgotPassword(String email) {
+//		return userRepository.findByEmail(email).map(user -> {
+//	        // 1. 產生 UUID 作為 Token
+//	        String token = UUID.randomUUID().toString();
+//	        user.setResetToken(token);
+//	        
+//	        // 2. 設定過期時間 (例如 15 分鐘後)
+//	        user.setTokenExpiration(LocalDateTime.now().plusMinutes(15));
+//	        userRepository.save(user);
+//
+//	        // TODO: 串接 EmailService 寄送包含此 token 的連結
+//	        System.out.println("重設連結為: /reset-password.html?token=" + token);
+//	        
+//	        return new AuthResponse("重設連結已寄至信箱", true);
+//	    }).orElse(new AuthResponse("找不到此 Email 關聯的帳號", false));
+//	}
 
-	        // TODO: 串接 EmailService 寄送包含此 token 的連結
-	        System.out.println("重設連結為: /reset-password.html?token=" + token);
-	        
-	        return new AuthResponse("重設連結已寄至信箱", true);
-	    }).orElse(new AuthResponse("找不到此 Email 關聯的帳號", false));
-	}
+	    @Override
+	    public AuthResponse processForgotPassword(String email) {
+	        return userRepository.findByEmail(email).map(user -> {
+	            // 1. 產生 Token 並設定過期時間
+	            String token = UUID.randomUUID().toString();
+	            user.setResetToken(token);
+	            user.setTokenExpiration(LocalDateTime.now().plusMinutes(15));
+	            userRepository.save(user);
+
+	            // 2. 真正寄出郵件
+	            try {
+	                emailService.sendResetPasswordEmail(user.getEmail(), token);
+	                return new AuthResponse("重設連結已寄至您的信箱", true);
+	            } catch (Exception e) {
+	                return new AuthResponse("郵件發送失敗，請稍後再試", false);
+	            }
+	        }).orElse(new AuthResponse("找不到此 Email 關聯的帳號", false));
+	    }
 
 	@Override
 	public AuthResponse updatePassword(String token, String newPassword) {

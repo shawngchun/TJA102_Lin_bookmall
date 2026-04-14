@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>註冊成功 - 幻象書屋</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #d35400;
+            --bg: #fdfaf6;
+            --success: #27ae60;
+        }
+
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: var(--primary);
+        }
+
+        .success-card {
+            background: #ffffff;
+            padding: 3rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+            border-top: 5px solid var(--success);
+        }
+
+        .icon-circle {
+            width: 80px;
+            height: 80px;
+            background-color: #eafaf1;
+            color: var(--success);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+            margin: 0 auto 1.5rem;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            color: #7f8c8d;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        .btn-login {
+            display: inline-block;
+            padding: 0.8rem 2rem;
+            background-color: var(--primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s, opacity 0.3s;
+        }
+
+        .btn-login:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .countdown {
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        #seconds {
+            color: var(--accent);
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="success-card">
+        <div class="icon-circle">✓</div>
+        <h1>歡迎加入幻象書屋！</h1>
+        <p>您的帳號已建立成功。現在您可以登入並開始探索我們豐富的藏書，享受專屬於您的閱讀時光。</p>
+
+        <a href="/login.html" class="btn-login">立即前往登入</a>
+
+        <div class="countdown">
+            系統將在 <span id="seconds">5</span> 秒後自動為您跳轉...
+        </div>
+    </div>
+
+    <script>
+        // 自動倒數跳轉邏輯
+        let timeLeft = 5;
+        const secondsDisplay = document.getElementById('seconds');
+
+        const timer = setInterval(() => {
+            timeLeft--;
+            secondsDisplay.innerText = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                window.location.href = '/login.html';
+            }
+        }, 1000);
+    </script>
+</body>
+
+</html>
