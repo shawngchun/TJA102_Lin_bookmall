@@ -169,6 +169,24 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+
+            // === 新增：自動跳轉邏輯 ===
+            async function checkLoginAndRedirect() {
+                try {
+                    // 呼叫我們先前討論過的「我是誰」API
+                    const response = await fetch('/api/user/me');
+                    if (response.ok) {
+                        // 如果後端回傳 200 OK，代表已登入，直接導向首頁
+                        window.location.href = 'index.html';
+                        return; // 跳轉後就不執行後面的代碼
+                    }
+                } catch (error) {
+                    console.log("未登入或伺服器未啟動，留在登入頁");
+                }
+            }
+
+            checkLoginAndRedirect();
+
             const registerForm = document.getElementById('registerForm');
             const statusBox = document.getElementById('status-message');
             const btnSubmit = registerForm.querySelector('.btn-submit');
@@ -223,6 +241,21 @@
                     resetBtn();
                 }
             });
+
+            async function checkLoginAndRedirect() {
+                const loginCard = document.querySelector('.login-card');
+                try {
+                    const response = await fetch('/api/auth/me');
+                    if (response.ok) {
+                        window.location.href = 'index.html';
+                    } else {
+                        // 如果沒登入，才把表單顯示出來
+                        loginCard.style.display = 'block';
+                    }
+                } catch (error) {
+                    loginCard.style.display = 'block';
+                }
+            }
 
             function showStatus(msg, type) {
                 statusBox.innerText = msg;

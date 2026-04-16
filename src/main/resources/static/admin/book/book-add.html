@@ -8,8 +8,9 @@
         body {
             font-family: sans-serif;
             padding: 20px;
-            max-width: 600px;
+            max-width: 700px;
             margin: auto;
+            line-height: 1.6;
         }
 
         .form-group {
@@ -19,71 +20,219 @@
         label {
             display: block;
             margin-bottom: 5px;
+            font-weight: bold;
         }
 
         input,
-        textarea {
+        textarea,
+        select {
             width: 100%;
-            padding: 8px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
             box-sizing: border-box;
         }
 
+        .required::after {
+            content: " *";
+            color: red;
+        }
+
+        .image-preview-container {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px dashed #ccc;
+            text-align: center;
+        }
+
+        #img-preview {
+            max-width: 150px;
+            border-radius: 4px;
+            display: none;
+            margin: 0 auto 10px;
+        }
+
+        .btn-container {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
         .btn-save {
-            background-color: #28a745;
+            background: #28a745;
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 12px 25px;
             cursor: pointer;
+            border-radius: 4px;
+            flex: 1;
+            font-size: 1em;
+        }
+
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            padding: 12px 25px;
+            border-radius: 4px;
+            text-align: center;
+            flex: 1;
+        }
+
+        .btn-save:hover {
+            background: #218838;
         }
     </style>
 </head>
 
 <body>
     <h1>新增書籍</h1>
-    <div class="form-group">
-        <label>書名</label><input type="text" id="title">
+
+    <div id="add-form">
+        <div class="form-group">
+            <label class="required">書名</label>
+            <input type="text" id="title" placeholder="例如：Java 程式設計入門">
+        </div>
+
+        <div class="form-group">
+            <label>作者 (選填)</label>
+            <input type="text" id="author" placeholder="請輸入作者名稱">
+        </div>
+
+        <div style="display: flex; gap: 20px;">
+            <div class="form-group" style="flex: 1;">
+                <label class="required">價格 (Price)</label>
+                <input type="number" id="price" step="0.01" placeholder="0.00">
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label class="required">庫存 (Stock)</label>
+                <input type="number" id="stock" placeholder="0">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>書籍分類 (選填)</label>
+            <select id="category-id">
+                <option value="">-- 不指定分類 --</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>書籍描述 (選填)</label>
+            <textarea id="description" rows="5" placeholder="請輸入書籍簡介..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>書籍封面 (選填)</label>
+            <div class="image-preview-container">
+                <img id="img-preview" alt="封面預覽">
+                <input type="file" id="image-file" accept="image/*" onchange="previewImage(this)">
+            </div>
+        </div>
+
+        <div class="btn-container">
+            <button class="btn-save" onclick="saveBook()">確認新增書籍</button>
+            <a href="books.html" class="btn-cancel">取消並返回</a>
+        </div>
     </div>
-    <div class="form-group">
-        <label>圖片上傳 (ImgBB)</label>
-        <input type="file" id="image-file" accept="image/*">
-    </div>
-    <button class="btn-save" onclick="saveBook()">確認新增</button>
 
     <script>
-        // 引用先前定義的 uploadToImgBB 邏輯
-        async function saveBook() {
-            const fileInput = document.getElementById('image-file');
-            let imageUrl = '';
-
-            if (fileInput.files.length > 0) {
-                imageUrl = await uploadToImgBB(fileInput.files[0]);
-            }
-
-            const bookData = {
-                title: document.getElementById('title').value,
-                pictureUrl: imageUrl
-                // ... 其他欄位
-            };
-
-            const response = await fetch('/api/admin/books', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(bookData)
-            });
-
-            if (response.ok) {
-                alert('新增成功');
-                window.location.href = 'books.html';
+        // 頁面初始化：載入分類清單
+        async function loadCategories() {
+            try {
+                const response = await fetch('/api/admin/categories'); // 假設你的分類 API 路徑
+                if (response.ok) {
+                    const categories = await response.json();
+                    const select = document.getElementById('category-id');
+                    categories.forEach(cat => {
+                        const opt = document.createElement('option');
+                        opt.value = cat.id;
+                        opt.textContent = cat.name;
+                        select.appendChild(opt);
+                    });
+                }
+            } catch (error) {
+                console.error('載入分類失敗:', error);
             }
         }
 
+        // 預覽圖片
+        function previewImage(input) {
+            const preview = document.getElementById('img-preview');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // 執行新增
+        async function saveBook() {
+            const fileInput = document.getElementById('image-file');
+            const title = document.getElementById('title').value;
+            const price = document.getElementById('price').value;
+            const stock = document.getElementById('stock').value;
+
+            // 基礎阻擋：必填欄位檢查
+            if (!title || !price || !stock) {
+                alert('請填寫書名、價格與庫存');
+                return;
+            }
+
+            try {
+                let imageUrl = null;
+                // 如果有選圖片才上傳
+                if (fileInput.files.length > 0) {
+                    console.log('正在上傳圖片...');
+                    imageUrl = await uploadToImgBB(fileInput.files[0]);
+                }
+
+                // 組合資料物件 (處理空值)
+                const bookData = {
+                    title: title,
+                    author: document.getElementById('author').value || null, // 空字串轉為 null
+                    price: parseFloat(price),
+                    stock: parseInt(stock),
+                    description: document.getElementById('description').value || null,
+                    pictureUrl: imageUrl,
+                    // category 處理：如果沒選，後端接收到的可能是 null 或不處理
+                    category: document.getElementById('category-id').value ?
+                        { id: parseInt(document.getElementById('category-id').value) } : null
+                };
+
+                const response = await fetch('/api/admin/books', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(bookData)
+                });
+
+                if (response.ok) {
+                    alert('書籍新增成功！');
+                    window.location.href = 'books.html';
+                } else {
+                    const error = await response.json();
+                    alert('新增失敗：' + (error.message || '請檢查輸入欄位'));
+                }
+            } catch (error) {
+                console.error(error);
+                alert('發生錯誤：' + error.message);
+            }
+        }
+
+        // 共用 ImgBB 上傳邏輯
         async function uploadToImgBB(file) {
             const formData = new FormData();
             formData.append('image', file);
             const response = await fetch('/api/images/upload', { method: 'POST', body: formData });
+            if (!response.ok) throw new Error('圖片代理上傳失敗');
             const result = await response.json();
             return result.url;
         }
+
+        window.onload = loadCategories;
     </script>
 </body>
 
