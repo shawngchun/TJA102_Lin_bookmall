@@ -67,4 +67,17 @@ public class CartServiceImpl implements CartService {
         Optional.ofNullable(redisTemplate.delete(key))
                 .ifPresent(success -> System.out.println("購物車清空狀態: " + success));
     }
+
+	@Override
+	public Integer getCartItemNum(String username) {
+		
+		Map<Object, Object> rawCart = redisTemplate.opsForHash().entries(CART_PREFIX + username);
+		Integer totalQuantity = 0;
+		
+		for (Map.Entry<Object, Object> entry: rawCart.entrySet()) {
+			Integer quantity = Integer.parseInt(entry.getValue().toString());
+			totalQuantity += quantity;
+		}
+		return totalQuantity;
+	}
 }

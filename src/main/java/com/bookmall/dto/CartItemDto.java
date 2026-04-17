@@ -9,6 +9,7 @@ public class CartItemDto {
     private String categoryName; // 分類名稱 (從 Book 關聯的 Category 取得)
     private Integer quantity;    // 數量 (來自 Redis)
     private BigDecimal subtotal; // 小計 (單價 * 數量)
+    private String bookPictureUrl;
 
     // 空構造函數 (Jackson 需要)
     public CartItemDto() {}
@@ -18,6 +19,7 @@ public class CartItemDto {
         this.bookId = book.getId();
         this.title = book.getTitle();
         this.price = book.getPrice();
+        this.bookPictureUrl = book.getPictureUrl();
         // 處理分類名稱，防止 Category 為 null 時噴錯
         if (book.getCategory() != null) {
         	this.categoryName = book.getCategory().getName();
@@ -73,5 +75,13 @@ public class CartItemDto {
 
 	public void setSubtotal(BigDecimal subtotal) {
 		this.subtotal = subtotal;
+	}
+
+	public String getBookPictureUrl() {
+		return bookPictureUrl;
+	}
+
+	public void setBookPictureUrl(String bookPictureUrl) {
+		this.bookPictureUrl = bookPictureUrl;
 	}
 }

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幻象書屋 - 我的購物車</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #d35400;
+            --bg: #fdfaf6;
+            --text: #34495e;
+            --white: #ffffff;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: var(--white);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .nav-links a {
+            color: var(--white);
+            text-decoration: none;
+            margin-left: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .container {
+            padding: 2rem 5%;
+            flex: 1;
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 90%;
+        }
+
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        /* 購物車表格 */
+        .cart-table {
+            width: 100%;
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            border-collapse: collapse;
+            overflow: hidden;
+        }
+
+        .cart-table th {
+            background: #f8f9fa;
+            padding: 1.2rem;
+            text-align: left;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+
+        .cart-table td {
+            padding: 1.2rem;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+
+        .book-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .book-img {
+            width: 60px;
+            height: 80px;
+            background: #eee;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .book-detail {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .book-title {
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-qty {
+            border: 1px solid #ddd;
+            background: white;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .btn-remove {
+            color: #e74c3c;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 0.9rem;
+        }
+
+        /* 結算區 */
+        .summary-card {
+            margin-top: 2rem;
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            text-align: right;
+        }
+
+        .total-amount {
+            font-size: 1.5rem;
+            color: var(--accent);
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .btn-checkout {
+            padding: 1rem 2.5rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .empty-cart {
+            text-align: center;
+            padding: 5rem 0;
+        }
+
+        .empty-cart a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1 onclick="window.location.href='index.html'">幻象書屋</h1>
+        <nav class="nav-links">
+            <a href="index.html">繼續選購</a>
+            <a href="#" onclick="handleLogout()">登出</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="cart-header">
+            <h2>您的購物車</h2>
+        </div>
+
+        <div id="cartContent">
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', loadCart);
+
+        async function loadCart() {
+            const container = document.getElementById('cartContent');
+            try {
+                // 調用 CartController.getMyFullCart()
+                const response = await fetch('/api/cart');
+                if (response.status === 401) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                const items = await response.json();
+
+                if (!items || items.length === 0) {
+                    renderEmptyCart();
+                    return;
+                }
+
+                renderCartTable(items);
+            } catch (error) {
+                container.innerHTML = '<p>讀取購物車失敗，請稍後再試。</p>';
+            }
+        }
+
+        function renderCartTable(items) {
+            let total = 0;
+            let html = `
+            <table class="cart-table">
+                <thead>
+                    <tr>
+                        <th>商品資訊</th>
+                        <th>單價</th>
+                        <th>數量</th>
+                        <th>小計</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+            items.forEach(item => {
+                const subtotal = item.price * item.quantity;
+                total += subtotal;
+                html += `
+                <tr>
+                    <td>
+                        <div class="book-info">
+                            <img src="${item.bookPictureUrl || ''}" class="book-img" alt="封面">
+                            <div class="book-detail">
+                                <span class="book-title">${item.title}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>NT$ ${item.price}</td>
+                    <td>
+                        <div class="quantity-control">
+                            <span>${item.quantity}</span>
+                        </div>
+                    </td>
+                    <td>NT$ ${subtotal}</td>
+                    <td>
+                        <button class="btn-remove" onclick="removeItem(${item.bookId})">移除</button>
+                    </td>
+                </tr>
+            `;
+            });
+
+            html += `</tbody></table>`;
+            html += `
+            <div class="summary-card">
+                <div class="total-amount">總計：NT$ ${total}</div>
+                <button class="btn-checkout" onclick="goToCheckout()">前往結帳</button>
+            </div>
+        `;
+
+            document.getElementById('cartContent').innerHTML = html;
+        }
+
+        async function removeItem(bookId) {
+            if (!confirm('確定要從購物車移除此商品嗎？')) return;
+
+            try {
+                // 調用 CartController.removeFromCart()
+                const response = await fetch(`/api/cart/remove/${bookId}`, { method: 'DELETE' });
+                if (response.ok) {
+                    loadCart(); // 重新載入
+                }
+            } catch (error) {
+                alert('移除失敗');
+            }
+        }
+
+        function renderEmptyCart() {
+            document.getElementById('cartContent').innerHTML = `
+            <div class="empty-cart">
+                <p>您的購物車目前是空的</p>
+                <a href="index.html">去挑選喜歡的書吧！</a>
+            </div>
+        `;
+        }
+
+        function goToCheckout() {
+            window.location.href = 'checkout.html';
+        }
+
+        async function handleLogout() {
+            await fetch('/logout', { method: 'POST' });
+            window.location.href = 'index.html';
+        }
+    </script>
+
+</body>
+
+</html>

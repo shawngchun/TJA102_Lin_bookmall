@@ -396,9 +396,28 @@
 
         // 5. 加入購物車 (串接 Redis)
         async function addToCart(bookId) {
-            // 這部分可以呼叫你實作好的 Redis 購物車 Controller
+            const response = await fetch('/api/cart/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bookId, quantity: 1 })
+            });
+            const data = await response.json();
+
             console.log('加入購物車:', bookId);
-            alert('已加入購物車！');
+            alert(data.message);
+            updateCartBadge();
+        }
+
+        async function updateCartBadge() {
+            try {
+                const response = await fetch('/api/cart/count');
+                if (response.ok) {
+                    const count = await response.json();
+                    document.getElementById('cartCount').textContent = count;
+                }
+            } catch (error) {
+                console.error('無法更新購物車數量:', error);
+            }
         }
 
 
@@ -417,6 +436,7 @@
                 <a href="#" onclick="handleLogout()">登出</a>
                 <a href="cart.html">購物車 <span id="cartCount">0</span></a>
             `;
+                    updateCartBadge()
                 }
             } catch (error) {
                 // 未登入，保持原狀（顯示 登入/註冊）

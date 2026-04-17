@@ -18,4 +18,6 @@ public interface CartService {
     List<CartItemDto> getCartDetails(String username);
     
     public void clearCart(String username);
+    
+    public Integer getCartItemNum(String username);
 }
