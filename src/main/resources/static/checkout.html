@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幻象書屋 - 結帳確認</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #d35400;
+            --bg: #fdfaf6;
+            --text: #34495e;
+            --white: #ffffff;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: var(--white);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .container {
+            padding: 2rem 5%;
+            flex: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 95%;
+        }
+
+        .checkout-layout {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 2rem;
+        }
+
+        .section-card {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            color: var(--primary);
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 0.5rem;
+        }
+
+        /* 訂單摘要清單 */
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.8rem;
+            font-size: 0.9rem;
+        }
+
+        .summary-total {
+            border-top: 2px solid var(--bg);
+            padding-top: 1rem;
+            margin-top: 1rem;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: var(--accent);
+        }
+
+        /* 表單樣式 */
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        .btn-order {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-order:hover {
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            .checkout-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1 onclick="window.location.href='index.html'">幻象書屋</h1>
+    </header>
+
+    <div class="container">
+        <div class="checkout-layout">
+            <div class="checkout-form">
+                <div class="section-card">
+                    <h2>收件人資訊</h2>
+                    <form id="checkoutForm">
+                        <div class="form-group">
+                            <label for="receiverName">姓名</label>
+                            <input type="text" id="receiverName" name="receiverName" required placeholder="請輸入收件人真實姓名">
+                        </div>
+                        <div class="form-group">
+                            <label for="receiverAddress">收件地址</label>
+                            <input type="text" id="receiverAddress" name="receiverAddress" required
+                                placeholder="請輸入詳細地址">
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="order-summary">
+                <div class="section-card">
+                    <h2>訂單摘要</h2>
+                    <div id="itemList">
+                    </div>
+                    <div class="summary-total" id="totalDisplay">總計：NT$ 0</div>
+                    <button type="button" class="btn-order" onclick="submitOrder()">確認下單並支付</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', loadSummary);
+
+        // 1. 載入購物車摘要
+        async function loadSummary() {
+            try {
+                // 調用 CartController.getMyFullCart()
+                const response = await fetch('/api/cart');
+                if (response.status === 401) { window.location.href = 'login.html'; return; }
+
+                const items = await response.json();
+                const listContainer = document.getElementById('itemList');
+                let total = 0;
+
+                if (items.length === 0) {
+                    alert('購物車是空的，無法結帳');
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                listContainer.innerHTML = items.map(item => {
+                    total += item.price * item.quantity;
+                    return `
+                    <div class="summary-item">
+                        <span>${item.title} x ${item.quantity}</span>
+                        <span>NT$ ${item.price * item.quantity}</span>
+                    </div>
+                `;
+                }).join('');
+
+                document.getElementById('totalDisplay').textContent = `總計：NT$ ${total}`;
+            } catch (error) {
+                console.error('無法載入訂單摘要', error);
+            }
+        }
+
+        // 2. 提交訂單
+        async function submitOrder() {
+            const name = document.getElementById('receiverName').value;
+            const address = document.getElementById('receiverAddress').value;
+
+            if (!name || !address) { alert('請填寫完整的收件資訊'); return; }
+
+            const requestData = {
+                receiverName: name,
+                receiverAddress: address
+            };
+
+            try {
+                // 調用 OrderController.checkout()
+                const response = await fetch('/api/orders/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+
+                if (response.ok) {
+                    const order = await response.json();
+                    // 成功下單後，導向支付頁面
+                    window.location.href = `/api/orders/${order.id}/pay`;
+                } else {
+                    const error = await response.json();
+                    alert('下單失敗：' + (error.message || '請稍後再試'));
+                }
+            } catch (error) {
+                console.error('連線異常', error);
+                alert('系統繁忙，請稍後再試');
+            }
+        }
+    </script>
+
+</body>
+
+</html>

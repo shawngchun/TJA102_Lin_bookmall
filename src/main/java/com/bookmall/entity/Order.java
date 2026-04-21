@@ -29,6 +29,9 @@ public class Order {
 
     @Column(name = "status")
     private Integer status = 0; // 0:待付款, 1:已付款, 2:已取消
+    
+    @Column(name = "merchant_trade_no")
+    private String merchantTradeNo;
 
     @Column(name = "receiver_name", length = 50)
     private String receiverName;
@@ -105,6 +108,14 @@ public class Order {
 
 	public void setItems(List<OrderItem> items) {
 		this.items = items;
+	}
+
+	public String getMerchantTradeNo() {
+		return merchantTradeNo;
+	}
+
+	public void setMerchantTradeNo(String merchantTradeNo) {
+		this.merchantTradeNo = merchantTradeNo;
 	}
     
 }

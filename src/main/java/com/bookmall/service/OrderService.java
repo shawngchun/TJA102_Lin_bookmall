@@ -3,6 +3,7 @@ package com.bookmall.service;
 import java.util.List;
 
 import com.bookmall.dto.CheckoutRequest;
+import com.bookmall.dto.OrderResponseDto;
 import com.bookmall.entity.Order;
 
 public interface OrderService {
@@ -12,5 +13,6 @@ public interface OrderService {
     // 2. 原本的 payOrder 留著，給綠界回傳通知時調用
     void payOrder(Integer orderId);
     List<Order> getOrdersByEmail(String email);
+    OrderResponseDto getLatestOrdersByEmail(String email);
 
 }

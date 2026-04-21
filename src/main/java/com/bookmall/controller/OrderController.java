@@ -1,5 +1,6 @@
 package com.bookmall.controller;
 
+import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
 
@@ -14,8 +15,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bookmall.dto.CheckoutRequest;
+import com.bookmall.dto.OrderResponseDto;
 import com.bookmall.entity.Order;
 import com.bookmall.service.OrderService;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -60,6 +64,16 @@ public class OrderController {
         
         return ResponseEntity.ok(orders);
     }
+    
+    @GetMapping("/myneworder")
+    public ResponseEntity<OrderResponseDto> getMyNewOrders(java.security.Principal principal) {
+    	String email = principal.getName();
+    	
+    	// 直接呼叫 Service 層取得結果
+    	OrderResponseDto dto = orderService.getLatestOrdersByEmail(email);
+    	
+    	return ResponseEntity.ok(dto);
+    }
 
 //    @GetMapping("/my")
 //    public ResponseEntity<List<Order>> getMyOrders(@AuthenticationPrincipal UserDetails userDetails) {
@@ -80,5 +94,11 @@ public class OrderController {
     public String payOrder(@PathVariable Integer orderId) {
         // 這裡改為呼叫產生金流表單的邏輯
         return orderService.generatePaymentForm(orderId);
+    }
+    
+    @PostMapping("/success")
+    public void handlePaymentSuccess(HttpServletResponse response) throws IOException {
+        // 強制瀏覽器重導向到靜態頁面
+        response.sendRedirect("/paysuccess.html");
     }
 }

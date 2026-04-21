@@ -8,6 +8,7 @@ public class OrderResponseDto {
     private Integer orderId;
     private BigDecimal totalAmount;
     private Integer status;
+    private String merchantTradeNo;
     private LocalDateTime createdAt;
     private List<OrderItemDto> items;
 
@@ -78,5 +79,13 @@ public class OrderResponseDto {
 	public void setItems(List<OrderItemDto> items) {
 		this.items = items;
 	}
-    
+
+	public String getMerchantTradeNo() {
+		return merchantTradeNo;
+	}
+
+	public void setMerchantTradeNo(String merchantTradeNo) {
+		this.merchantTradeNo = merchantTradeNo;
+	}
+	
 }

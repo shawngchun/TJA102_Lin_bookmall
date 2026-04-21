@@ -2,6 +2,7 @@ package com.bookmall.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,4 +29,8 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
 
     // 如果不考慮狀態，只查日期區間
     Page<Order> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end, Pageable pageable);
+    
+ // 透過 userId 尋找最新的一筆訂單 (依 id 降序排列)
+    // Spring Data JPA 會自動解析為：SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC LIMIT 1
+    Optional<Order> findFirstByUserIdOrderByIdDesc(Integer userId);
 }

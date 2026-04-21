@@ -331,6 +331,40 @@
                 loginCard.style.display = 'block';
             }
         }
+
+        function getCsrfToken() {
+            const name = "XSRF-TOKEN=";
+            const decodedCookie = decodeURIComponent(document.cookie);
+            const ca = decodedCookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i].trim();
+                if (c.indexOf(name) === 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+            return null;
+        }
+
+        async function postData(url = '', data = {}) {
+            const token = getCsrfToken();
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // 必須加入此 Header，Spring Security 預設檢查 X-XSRF-TOKEN
+                    'X-XSRF-TOKEN': token
+                },
+                body: JSON.stringify(data),
+                // 確保跨域或 ngrok 環境下攜帶 Cookie
+                credentials: 'include'
+            });
+
+            if (response.status === 403) {
+                console.error("CSRF Token 驗證失敗或遺失");
+            }
+            return response.json();
+        }
     </script>
 </body>
 

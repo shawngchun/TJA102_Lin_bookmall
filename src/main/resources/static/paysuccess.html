@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>付款成功 - 幻象書屋</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #d35400;
+            --bg: #fdfaf6;
+            --text: #34495e;
+            --white: #ffffff;
+            --success: #27ae60;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .success-card {
+            background: var(--white);
+            padding: 3rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            border-top: 5px solid var(--success);
+        }
+
+        .icon-box {
+            width: 80px;
+            height: 80px;
+            background-color: #eafaf1;
+            color: var(--success);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            margin: 0 auto 1.5rem;
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            font-size: 1.8rem;
+        }
+
+        p {
+            color: #7f8c8d;
+            margin-bottom: 2rem;
+        }
+
+        .order-info {
+            background-color: #f9f9f9;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: left;
+            margin-bottom: 2rem;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.8rem;
+            font-size: 0.95rem;
+        }
+
+        .info-label {
+            color: #95a5a6;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .price-value {
+            color: var(--accent);
+            font-size: 1.1rem;
+        }
+
+        .btn-group {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.9rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--primary);
+            border: 1.5px solid var(--primary);
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        /* 動畫效果 */
+        @keyframes scaleUp {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .success-card {
+            animation: scaleUp 0.5s ease-out;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="success-card">
+        <div class="icon-box">✓</div>
+        <h1>付款成功！</h1>
+        <p>感謝您的訂購，我們將盡快為您安排出貨。</p>
+
+        <div class="order-info">
+            <div class="info-row">
+                <span class="info-label">訂單編號</span>
+                <span class="info-value" id="orderIdDisplay">載入中...</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">付款金額</span>
+                <span class="info-value price-value" id="amountDisplay">載入中...</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">付款日期</span>
+                <span class="info-value" id="dateDisplay">--</span>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <a href="index.html" class="btn btn-primary">返回首頁</a>
+            <a href="orders.html" class="btn btn-outline">查看我的訂單</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+
+            try {
+                const response = await fetch(`/api/orders/myneworder`);
+                if (response.ok) {
+                    const order = await response.json();
+
+                    document.getElementById('orderIdDisplay').textContent = `# ${order.merchantTradeNo}`;
+                    document.getElementById('amountDisplay').textContent = `NT$ ${order.totalAmount}`;
+
+                    // 格式化日期
+                    const date = new Date(order.createdAt);
+                    document.getElementById('dateDisplay').textContent = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                } else {
+                    throw new Error('找不到訂單');
+                }
+            } catch (error) {
+                console.error('載入失敗', error);
+                document.getElementById('orderIdDisplay').textContent = '資料錯誤';
+            }
+        });
+    </script>
+</body>
+
+</html>

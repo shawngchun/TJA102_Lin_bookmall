@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.bookmall.dto.CartItemDto;
 import com.bookmall.dto.CheckoutRequest;
+import com.bookmall.dto.OrderResponseDto;
 import com.bookmall.entity.BkmlUser;
 import com.bookmall.entity.Book;
 import com.bookmall.entity.Order;
@@ -118,6 +120,38 @@ public class OrderServiceImpl implements OrderService {
     }
     
     @Override
+    public OrderResponseDto getLatestOrdersByEmail(String email) {
+    	// 1. 透過 email 找到用戶
+    	BkmlUser user = userRepository.findByEmail(email)
+    			.orElseThrow(() -> new RuntimeException("用戶不存在"));
+    	Order order = orderRepository.findFirstByUserIdOrderByIdDesc(user.getId())
+                .orElseThrow(() -> new RuntimeException("該用戶尚無訂單紀錄"));
+    	
+    	// 3. 開始手動轉換為 DTO
+        OrderResponseDto dto = new OrderResponseDto();
+        dto.setOrderId(order.getId());
+        dto.setTotalAmount(order.getTotalAmount());
+        dto.setStatus(order.getStatus());
+        dto.setMerchantTradeNo(order.getMerchantTradeNo());
+        dto.setCreatedAt(order.getCreatedAt());
+
+        // 4. 處理 OrderItem 列表的轉換
+        if (order.getItems() != null) {
+            List<OrderResponseDto.OrderItemDto> itemDtos = order.getItems().stream().map(item -> {
+                OrderResponseDto.OrderItemDto itemDto = new OrderResponseDto.OrderItemDto();
+                itemDto.setBookId(item.getBookId());
+                itemDto.setQuantity(item.getQuantity());
+                itemDto.setCurrentPrice(item.getCurrentPrice());
+                return itemDto;
+            }).collect(Collectors.toList());
+            
+            dto.setItems(itemDtos);
+        }
+
+        return dto;
+    }
+    
+    @Override
     public String generatePaymentForm(Integer orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("訂單不存在"));
@@ -128,6 +162,10 @@ public class OrderServiceImpl implements OrderService {
         String hashIV = "EkRm7iFT261dpevs";
         
         String tradeNo = "BKML" + orderId + "T" + System.currentTimeMillis()/1000; // 產生唯一訂單編號
+        System.out.println("=============================="+tradeNo.toString());
+        order.setMerchantTradeNo(tradeNo.toString());
+        order = orderRepository.save(order);
+        
         String tradeDate = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new Date());
 
         Map<String, String> params = new HashMap<>();

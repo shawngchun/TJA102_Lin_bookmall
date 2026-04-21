@@ -12,9 +12,13 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
+import com.bookmall.config.filter.CsrfCookieFilter;
 import com.bookmall.security.CustomOAuth2UserService;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -35,7 +39,8 @@ public class SecurityConfig {
             	// 開放首頁、靜態資源與所有 API 認證接口 (包含忘記密碼)
                 .requestMatchers("/", "/login.html", "/register.html", "/successRegister.html", "/index.html", "/static/**", "/css/**", "/js/**", "/forgot-password.html", "/reset-password.html").permitAll()
                 .requestMatchers("/api/auth/**", "/api/payment/callback", "/api/auth/forgot-password", "/api/books/**", "/api/categories/**").permitAll()
-//                .requestMatchers("/", "/login/**", "/oauth2/**", "/api/payment/callback").permitAll()
+                .requestMatchers("/orders/success").permitAll() // 允許綠界跳轉回來
+                .requestMatchers("/api/payment/callback").permitAll() // 允許綠界 Server 通知
                 .requestMatchers("/api/admin/**", "/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
@@ -45,11 +50,6 @@ public class SecurityConfig {
             可以考慮移除 .formLogin()，或者保留它作為傳統頁面備援。
             但為了純 RESTful 體驗，通常會關閉它或自定義 EntryPoint。
             */
-            // 傳統表單登入
-//            .formLogin(form -> form
-//                .loginPage("/login") 
-//                .permitAll()
-//            )
             // OAuth2 登入配置
             .oauth2Login(oauth2 -> oauth2
                 .userInfoEndpoint(userInfo -> userInfo
