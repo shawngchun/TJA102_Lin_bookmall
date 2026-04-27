@@ -36,6 +36,15 @@ public class OrderServiceImpl implements OrderService {
 
     @Value("${ecpay.client-back-url}")
     private String ecpayClientBackUrl;
+    
+    // 綠界測試環境參數
+    @Value("${ecpay.merchantID}")
+    private String merchantID;
+    @Value("${ecpay.hashKey}")
+    private String hashKey;
+    @Value("${ecpay.hashIV}")
+    private String hashIV;
+        
 
     @Autowired private CartService cartService;
     @Autowired private OrderRepository orderRepository;
@@ -194,11 +203,6 @@ public class OrderServiceImpl implements OrderService {
     public String generatePaymentForm(Integer orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("訂單不存在"));
-
-        // 綠界測試環境參數
-        String merchantID = "3002607";
-        String hashKey = "pwFHCqoQZGmho4w6";
-        String hashIV = "EkRm7iFT261dpevs";
         
         String tradeNo = "BKML" + orderId + "T" + System.currentTimeMillis()/1000; // 產生唯一訂單編號
         order.setMerchantTradeNo(tradeNo.toString());
