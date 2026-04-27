@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的訂單 - 幻象書屋</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #d35400;
+            --bg: #fdfaf6;
+            --text: #34495e;
+            --white: #ffffff;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            --success: #27ae60;
+            --warning: #f1c40f;
+            --danger: #e74c3c;
+        }
+
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: var(--white);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .nav-links a {
+            color: var(--white);
+            text-decoration: none;
+            margin-left: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .container {
+            padding: 2rem 5%;
+            flex: 1;
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 90%;
+        }
+
+        h2 {
+            color: var(--primary);
+            margin-bottom: 2rem;
+            border-left: 5px solid var(--accent);
+            padding-left: 1rem;
+        }
+
+        /* 訂單卡片設計 */
+        .order-card {
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+            border: 1px solid #eee;
+        }
+
+        .order-header {
+            background: #f8f9fa;
+            padding: 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        .order-meta {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+        }
+
+        .order-meta span strong {
+            color: var(--text);
+            display: block;
+            margin-top: 0.2rem;
+            font-size: 1rem;
+        }
+
+        .status-badge {
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-0 {
+            background: #fff9db;
+            color: #f08c00;
+        }
+
+        /* 待付款 */
+        .status-1 {
+            background: #e6fcf5;
+            color: #099268;
+        }
+
+        /* 已付款 */
+        .status-2 {
+            background: #fff5f5;
+            color: #fa5252;
+        }
+
+        /* 已取消 */
+
+        .order-body {
+            padding: 1.2rem;
+        }
+
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.8rem 0;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .item-row:last-child {
+            border-bottom: none;
+        }
+
+        .item-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .item-name {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .item-qty {
+            font-size: 0.8rem;
+            color: #95a5a6;
+        }
+
+        .order-footer {
+            padding: 1rem 1.2rem;
+            background: #fff;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .order-total {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: var(--accent);
+        }
+
+        .btn-pay {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 5rem 0;
+            color: #95a5a6;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1 onclick="window.location.href='index.html'">幻象書屋</h1>
+        <nav class="nav-links">
+            <a href="index.html">首頁</a>
+            <a href="cart.html">購物車</a>
+            <a href="#" onclick="handleLogout()">登出</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <h2>我的購買紀錄</h2>
+        <div id="orderList">
+            <p>正在載入訂單...</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', loadOrders);
+
+        async function loadOrders() {
+            const listContainer = document.getElementById('orderList');
+            try {
+                // 調用 OrderController.getMyOrders()
+                const response = await fetch('/api/orders/my');
+
+                if (response.status === 401) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const orders = await response.json();
+
+                if (!orders || orders.length === 0) {
+                    listContainer.innerHTML = '<div class="empty-state">目前尚無訂單紀錄。</div>';
+                    return;
+                }
+
+                renderOrders(orders);
+            } catch (error) {
+                listContainer.innerHTML = '<p>讀取失敗，請稍後再試。</p>';
+            }
+        }
+
+        function renderOrders(orders) {
+            const listContainer = document.getElementById('orderList');
+            listContainer.innerHTML = '';
+
+            orders.forEach(order => {
+                const date = new Date(order.createdAt).toLocaleDateString();
+                const statusText = getStatusText(order.status);
+
+                const card = document.createElement('div');
+                card.className = 'order-card';
+
+                // 建立訂單內容 HTML
+                let itemsHtml = '';
+                if (order.items && order.items.length > 0) {
+                    itemsHtml = order.items.map(item => `
+                    <div class="item-row">
+                        <div class="item-info">
+                            <span class="item-name">書籍 ID: ${item.book.id}</span>
+                            <span class="item-name">書籍: ${item.book.title}</span>
+                            <span class="item-qty">數量: ${item.quantity}</span>
+                        </div>
+                        <span>NT$ ${item.currentPrice * item.quantity}</span>
+                    </div>
+                `).join('');
+                }
+
+                // 如果狀態為 0 (待付款)，顯示支付按鈕
+                const payButton = order.status === 0
+                    ? `<a href="/api/orders/${order.id}/pay" class="btn-pay">前往付款</a>`
+                    : '';
+
+                card.innerHTML = `
+                <div class="order-header">
+                    <div class="order-meta">
+                        <span>訂單日期<strong>${date}</strong></span>
+                        <span>訂單編號<strong>#${order.id}</strong></span>
+                        <span>收件人<strong>${order.receiverName || '未填寫'}</strong></span>
+                    </div>
+                    <span class="status-badge status-${order.status}">${statusText}</span>
+                </div>
+                <div class="order-body">
+                    ${itemsHtml}
+                </div>
+                <div class="order-footer">
+                    <div class="order-total">總金額：NT$ ${order.totalAmount}</div>
+                    ${payButton}
+                </div>
+            `;
+                listContainer.appendChild(card);
+            });
+        }
+
+        function getStatusText(status) {
+            // 根據 Order.java 的註解定義
+            switch (status) {
+                case 0: return '待付款';
+                case 1: return '已付款';
+                case 2: return '已取消';
+                default: return '未知狀態';
+            }
+        }
+
+        async function handleLogout() {
+            await fetch('/logout', { method: 'POST' });
+            window.location.href = 'index.html';
+        }
+    </script>
+
+</body>
+
+</html>

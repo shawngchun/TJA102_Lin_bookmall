@@ -160,10 +160,21 @@
             <div class="order-summary">
                 <div class="section-card">
                     <h2>訂單摘要</h2>
-                    <div id="itemList">
-                    </div>
+                    <div id="itemList"></div>
                     <div class="summary-total" id="totalDisplay">總計：NT$ 0</div>
-                    <button type="button" class="btn-order" onclick="submitOrder()">確認下單並支付</button>
+
+                    <button type="button" id="btnCreateOrder" class="btn-order" onclick="submitOrder()">建立訂單</button>
+
+                    <div id="paySection" style="display: none; margin-top: 1rem;">
+                        <p
+                            style="font-size: 0.85rem; color: var(--success); text-align: center; margin-bottom: 0.5rem;">
+                            ✓ 訂單已建立成功！
+                        </p>
+                        <button type="button" id="btnGoToPay" class="btn-order" style="background-color: var(--accent);"
+                            onclick="goToPayment()">
+                            前往支付 (綠界金流)
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -206,6 +217,9 @@
         }
 
         // 2. 提交訂單
+        let currentOrderId = null; // 用於存放成功建立的訂單 ID
+
+        // 1. 提交訂單 (第一階段：存入 SQL)
         async function submitOrder() {
             const name = document.getElementById('receiverName').value;
             const address = document.getElementById('receiverAddress').value;
@@ -217,7 +231,12 @@
                 receiverAddress: address
             };
 
+            const btnCreate = document.getElementById('btnCreateOrder');
+
             try {
+                btnCreate.disabled = true;
+                btnCreate.innerText = '正在處理訂單...';
+
                 // 調用 OrderController.checkout()
                 const response = await fetch('/api/orders/checkout', {
                     method: 'POST',
@@ -227,16 +246,35 @@
 
                 if (response.ok) {
                     const order = await response.json();
-                    // 成功下單後，導向支付頁面
-                    window.location.href = `/api/orders/${order.id}/pay`;
+                    currentOrderId = order.id; // 取得後端產生的自增 ID
+
+                    // 介面切換：隱藏下單鈕，顯示支付鈕
+                    btnCreate.style.display = 'none';
+                    document.getElementById('paySection').style.display = 'block';
+
+                    // 鎖定收件資訊欄位，避免下單後又修改
+                    document.getElementById('receiverName').disabled = true;
+                    document.getElementById('receiverAddress').disabled = true;
                 } else {
                     const error = await response.json();
-                    alert('下單失敗：' + (error.message || '請稍後再試'));
+                    alert('建立訂單失敗：' + (error.message || '請稍後再試'));
+                    btnCreate.disabled = false;
+                    btnCreate.innerText = '建立訂單';
                 }
             } catch (error) {
                 console.error('連線異常', error);
                 alert('系統繁忙，請稍後再試');
+                btnCreate.disabled = false;
+                btnCreate.innerText = '建立訂單';
             }
+        }
+
+        // 2. 前往支付 (第二階段：跳轉金流)
+        function goToPayment() {
+            if (!currentOrderId) return;
+
+            // 跳轉至後端產生金流表單的 Endpoint
+            window.location.href = `/api/orders/${currentOrderId}/pay`;
         }
     </script>
 

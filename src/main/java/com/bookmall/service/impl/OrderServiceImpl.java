@@ -6,7 +6,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +55,8 @@ public class OrderServiceImpl implements OrderService {
             throw new RuntimeException("購物車是空的");
         }
 
+        Map<Integer, Book> bookCache = new HashMap<>();
+        
         // 3. 檢查並扣除庫存 (原本 Controller 的 loop)
         for (CartItemDto item : cartItems) {
             Book book = bookRepository.findById(item.getBookId())
@@ -65,6 +66,8 @@ public class OrderServiceImpl implements OrderService {
             }
             book.setStock(book.getStock() - item.getQuantity());
             bookRepository.save(book);
+            
+            bookCache.put(book.getId(), book);
         }
 
         // 4. 建立訂單與明細 (原本 Controller 的 Lambda 轉換)
@@ -80,9 +83,11 @@ public class OrderServiceImpl implements OrderService {
         order.setTotalAmount(totalAmount);
 
         List<OrderItem> orderItems = cartItems.stream().map(item -> {
+            Book cachedBook = bookCache.get(item.getBookId()); // 從我們建立的 Map 中取得
+            
             OrderItem orderItem = new OrderItem();
             orderItem.setOrder(order);
-            orderItem.setBookId(item.getBookId());
+            orderItem.setBook(cachedBook); // 直接關聯實體物件，JPA 會自動處理外鍵
             orderItem.setQuantity(item.getQuantity());
             orderItem.setCurrentPrice(item.getPrice());
             return orderItem;
@@ -116,41 +121,75 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new RuntimeException("用戶不存在"));
 
         // 2. 回傳該用戶的訂單清單
-        return orderRepository.findByUserId(user.getId());
+        return orderRepository.findAllByUserIdOrderByIdDesc(user.getId());
     }
     
     @Override
     public OrderResponseDto getLatestOrdersByEmail(String email) {
     	// 1. 透過 email 找到用戶
-    	BkmlUser user = userRepository.findByEmail(email)
-    			.orElseThrow(() -> new RuntimeException("用戶不存在"));
-    	Order order = orderRepository.findFirstByUserIdOrderByIdDesc(user.getId())
+        BkmlUser user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("用戶不存在"));
+        
+        // 2. 獲取該用戶最新的一筆訂單
+        Order order = orderRepository.findFirstByUserIdOrderByIdDesc(user.getId())
                 .orElseThrow(() -> new RuntimeException("該用戶尚無訂單紀錄"));
-    	
-    	// 3. 開始手動轉換為 DTO
+        
+        // 3. 不論狀態是 1 (成功) 還是 0 (待付款/失敗)，都轉換為 DTO
         OrderResponseDto dto = new OrderResponseDto();
         dto.setOrderId(order.getId());
         dto.setTotalAmount(order.getTotalAmount());
-        dto.setStatus(order.getStatus());
+        dto.setStatus(order.getStatus()); // 這裡傳回狀態值
         dto.setMerchantTradeNo(order.getMerchantTradeNo());
         dto.setCreatedAt(order.getCreatedAt());
 
-        // 4. 處理 OrderItem 列表的轉換
+        // 4. 處理訂單明細轉換
         if (order.getItems() != null) {
             List<OrderResponseDto.OrderItemDto> itemDtos = order.getItems().stream().map(item -> {
                 OrderResponseDto.OrderItemDto itemDto = new OrderResponseDto.OrderItemDto();
-                itemDto.setBookId(item.getBookId());
+                itemDto.setBookId(item.getBook().getId());
                 itemDto.setQuantity(item.getQuantity());
                 itemDto.setCurrentPrice(item.getCurrentPrice());
                 return itemDto;
             }).collect(Collectors.toList());
-            
             dto.setItems(itemDtos);
         }
+        
+        return dto;
+    	}
+    
+    @Override
+    public OrderResponseDto findOrderByIdAndUserId(Integer orderId, String email) {
+    	// 1. 透過 email 找到用戶
+        Integer userId = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("用戶不存在")).getId();
+        
+        // 2. 獲取該用戶最新的一筆訂單
+        Order order = orderRepository.findByIdAndUserId(orderId, userId)
+                .orElseThrow(() -> new RuntimeException("該用戶尚無訂單紀錄"));
+        
+        // 3. 不論狀態是 1 (成功) 還是 0 (待付款/失敗)，都轉換為 DTO
+        OrderResponseDto dto = new OrderResponseDto();
+        dto.setOrderId(order.getId());
+        dto.setTotalAmount(order.getTotalAmount());
+        dto.setStatus(order.getStatus()); // 這裡傳回狀態值
+        dto.setMerchantTradeNo(order.getMerchantTradeNo());
+        dto.setCreatedAt(order.getCreatedAt());
 
+        // 4. 處理訂單明細轉換
+        if (order.getItems() != null) {
+            List<OrderResponseDto.OrderItemDto> itemDtos = order.getItems().stream().map(item -> {
+                OrderResponseDto.OrderItemDto itemDto = new OrderResponseDto.OrderItemDto();
+                itemDto.setBookId(item.getBook().getId());
+                itemDto.setQuantity(item.getQuantity());
+                itemDto.setCurrentPrice(item.getCurrentPrice());
+                return itemDto;
+            }).collect(Collectors.toList());
+            dto.setItems(itemDtos);
+        }
+        
         return dto;
     }
-    
+    	
     @Override
     public String generatePaymentForm(Integer orderId) {
         Order order = orderRepository.findById(orderId)
@@ -162,7 +201,6 @@ public class OrderServiceImpl implements OrderService {
         String hashIV = "EkRm7iFT261dpevs";
         
         String tradeNo = "BKML" + orderId + "T" + System.currentTimeMillis()/1000; // 產生唯一訂單編號
-        System.out.println("=============================="+tradeNo.toString());
         order.setMerchantTradeNo(tradeNo.toString());
         order = orderRepository.save(order);
         
@@ -170,14 +208,10 @@ public class OrderServiceImpl implements OrderService {
 
         Map<String, String> params = new HashMap<>();
         params.put("MerchantID", merchantID);
-        // 訂單編號加上時間戳，避免綠界報錯「編號重複」
         params.put("MerchantTradeNo", tradeNo);
-//        System.out.println("========"+"BKML" + orderId + "T" + System.currentTimeMillis()/1000+"========");
-//        params.put("MerchantTradeDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")));
         params.put("MerchantTradeDate", tradeDate);
         params.put("PaymentType", "aio");
         params.put("TotalAmount", String.valueOf(order.getTotalAmount().intValue())); // 綠界只收整數
-//        System.out.println("========"+String.valueOf(order.getTotalAmount().intValue())+"========");
         params.put("TradeDesc", "BookMall 訂單付款");
         params.put("ItemName", "網路書店書籍一批");
         params.put("ReturnURL", ecpayReturnUrl); // 綠界通知後端的地方
@@ -204,4 +238,5 @@ public class OrderServiceImpl implements OrderService {
         System.out.println(sb.toString());
         return sb.toString();
     }
+
 }

@@ -14,5 +14,5 @@ public interface OrderService {
     void payOrder(Integer orderId);
     List<Order> getOrdersByEmail(String email);
     OrderResponseDto getLatestOrdersByEmail(String email);
-
+    OrderResponseDto findOrderByIdAndUserId(Integer orderId, String email);
 }

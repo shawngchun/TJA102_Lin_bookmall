@@ -28,10 +28,11 @@ public class OrderItem {
     @JsonIgnore
     private Order order;
 
-    @Column(name = "book_id", nullable = false)
-    private Integer bookId;
+    @ManyToOne(fetch = FetchType.LAZY) // 使用延遲載入提升效能
+    @JoinColumn(name = "book_id", nullable = false) // 外鍵關聯到 books 表的 id
+    private Book book;
 
-    @Column(nullable = false)
+	@Column(nullable = false)
     private Integer quantity;
 
     @Column(name = "current_price", nullable = false, precision = 10, scale = 2)
@@ -53,14 +54,6 @@ public class OrderItem {
 		this.order = order;
 	}
 
-	public Integer getBookId() {
-		return bookId;
-	}
-
-	public void setBookId(Integer bookId) {
-		this.bookId = bookId;
-	}
-
 	public Integer getQuantity() {
 		return quantity;
 	}
@@ -76,5 +69,15 @@ public class OrderItem {
 	public void setCurrentPrice(BigDecimal currentPrice) {
 		this.currentPrice = currentPrice;
 	}
+
+	public Book getBook() {
+		return book;
+	}
+
+	public void setBook(Book book) {
+		this.book = book;
+	}
+	
+	
     
 }

@@ -19,6 +19,7 @@ import com.bookmall.dto.OrderResponseDto;
 import com.bookmall.entity.Order;
 import com.bookmall.service.OrderService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
@@ -74,6 +75,17 @@ public class OrderController {
     	
     	return ResponseEntity.ok(dto);
     }
+    
+    @GetMapping("/{id}")
+    public ResponseEntity<OrderResponseDto> getOrderById(@PathVariable Integer id, java.security.Principal principal) {
+        // 從安全上下文取得 email
+        String email = principal.getName();
+        
+        // 呼叫 Service
+        OrderResponseDto orderDto = orderService.findOrderByIdAndUserId(id, email);
+        
+        return ResponseEntity.ok(orderDto);
+    }
 
 //    @GetMapping("/my")
 //    public ResponseEntity<List<Order>> getMyOrders(@AuthenticationPrincipal UserDetails userDetails) {
@@ -96,9 +108,29 @@ public class OrderController {
         return orderService.generatePaymentForm(orderId);
     }
     
+//    @PostMapping("/success")
+//    public void handlePaymentSuccess(HttpServletResponse response) throws IOException {
+//        // 強制瀏覽器重導向到靜態頁面
+//        response.sendRedirect("/paysuccess.html");
+//    }
+    
     @PostMapping("/success")
-    public void handlePaymentSuccess(HttpServletResponse response) throws IOException {
-        // 強制瀏覽器重導向到靜態頁面
-        response.sendRedirect("/paysuccess.html");
+    public void handlePaymentSuccess(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        // 1. 從綠界傳回的參數中取得訂單編號 (MerchantTradeNo)
+        // 綠界會將其原本傳過去的編號原封不動傳回
+        String merchantTradeNo = request.getParameter("MerchantTradeNo");
+
+        String orderId = extractOrderId(merchantTradeNo);
+        // 2. 為了讓前端能精確查詢，我們將這個編號夾帶在 URL 中
+        // 假設你的靜態頁面路徑是 /paysuccess.html
+        String redirectUrl = "/paysuccess.html?orderId=" + orderId;
+
+        // 3. 執行重導向
+        response.sendRedirect(redirectUrl);
+    }
+    
+    private String extractOrderId(String tradeNo) {
+        // 解析 "BKML15T..." 拿到 15
+        return tradeNo.substring(4, tradeNo.indexOf("T"));
     }
 }

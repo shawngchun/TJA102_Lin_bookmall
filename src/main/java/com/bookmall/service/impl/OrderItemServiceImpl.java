@@ -31,13 +31,13 @@ public class OrderItemServiceImpl implements OrderItemService {
         // 2. 將 Entity 轉換為 DTO 並補上書名
         return items.stream().map(item -> {
             // 根據 bookId 找書名
-            String title = bookRepository.findById(item.getBookId())
+            String title = bookRepository.findById(item.getBook().getId())
                     .map(book -> book.getTitle())
                     .orElse("未知書籍");
             
             return new OrderItemDTO(
                 item.getId(),
-                item.getBookId(),
+                item.getBook().getId(),
                 title, // 關鍵：在這裡注入書名
                 item.getQuantity(),
                 item.getCurrentPrice()
