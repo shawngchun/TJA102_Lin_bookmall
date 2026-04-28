@@ -399,7 +399,8 @@
             const response = await fetch('/api/cart/add', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ bookId, quantity: 1 })
+                body: JSON.stringify({ bookId, quantity: 1 }),
+                credentials: 'include'
             });
             const data = await response.json();
 
@@ -410,7 +411,10 @@
 
         async function updateCartBadge() {
             try {
-                const response = await fetch('/api/cart/count');
+                const response = await fetch('/api/cart/count', {
+                    method: 'GET',
+                    credentials: 'include' // 關鍵點：強制瀏覽器在請求中攜帶 Cookie
+                });
                 if (response.ok) {
                     const count = await response.json();
                     document.getElementById('cartCount').textContent = count;
