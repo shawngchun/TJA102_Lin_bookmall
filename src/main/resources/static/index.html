@@ -258,14 +258,7 @@
 
 <body>
 
-    <header>
-        <h1>幻象書屋</h1>
-        <nav class="nav-links" id="navContent">
-            <a href="index.html">首頁</a>
-            <a href="login.html" id="loginBtn">登入/註冊</a>
-            <a href="cart.html">購物車 <span id="cartCount">0</span></a>
-        </nav>
-    </header>
+    <header id="global-header"></header>
 
     <div class="container">
         <aside>
@@ -289,10 +282,10 @@
     <script>
 
         document.addEventListener('DOMContentLoaded', () => {
-            checkLoginStatus(); // 新增：頁面初始化時檢查身分
+            // checkLoginStatus(); // 新增：頁面初始化時檢查身分
             loadCategories();
             loadBooks();
-            updateCartBadge();
+            // updateCartBadge();
         });
 
         // 1. 載入分類列表
@@ -406,59 +399,62 @@
 
             console.log('加入購物車:', bookId);
             alert(data.message);
-            updateCartBadge();
-        }
-
-        async function updateCartBadge() {
-            try {
-                const response = await fetch('/api/cart/count', {
-                    method: 'GET',
-                    credentials: 'include' // 關鍵點：強制瀏覽器在請求中攜帶 Cookie
-                });
-                if (response.ok) {
-                    const count = await response.json();
-                    document.getElementById('cartCount').textContent = count;
-                }
-            } catch (error) {
-                console.error('無法更新購物車數量:', error);
+            // 由於 navbar.js 在全域定義了 updateCartBadge()，這裡可以直接呼叫！
+            if (typeof updateCartBadge === 'function') {
+                updateCartBadge();
             }
         }
 
+        // async function updateCartBadge() {
+        //     try {
+        //         const response = await fetch('/api/cart/count', {
+        //             method: 'GET',
+        //             credentials: 'include' // 關鍵點：強制瀏覽器在請求中攜帶 Cookie
+        //         });
+        //         if (response.ok) {
+        //             const count = await response.json();
+        //             document.getElementById('cartCount').textContent = count;
+        //         }
+        //     } catch (error) {
+        //         console.error('無法更新購物車數量:', error);
+        //     }
+        // }
 
-        async function checkLoginStatus() {
-            const loginBtn = document.getElementById('loginBtn');
 
-            try {
-                const response = await fetch('/api/user/me', {
-                    method: 'GET',
-                    credentials: 'include' // 關鍵點：強制瀏覽器在請求中攜帶 Cookie
-                }); // 詢問後端身分
-                if (response.ok) {
-                    const user = await response.json();
-                    // 登入成功：更換「登入/註冊」按鈕為「使用者名稱 + 登出」
-                    loginBtn.parentElement.innerHTML = `
-                <span style="color: white; font-size: 0.9rem;">
-                    Hi, ${user.username} 
-                </span>
-                <a href="cart.html">購物車 <span id="cartCount">0</span></a>
-                <a href="orders.html">我的訂單</a>
-                <a href="#" onclick="handleLogout()">登出</a>
-            `;
-                    updateCartBadge()
-                }
-            } catch (error) {
-                // 未登入，保持原狀（顯示 登入/註冊）
-            }
-        }
+        // async function checkLoginStatus() {
+        //     const loginBtn = document.getElementById('loginBtn');
+
+        //     try {
+        //         const response = await fetch('/api/user/me', {
+        //             method: 'GET',
+        //             credentials: 'include' // 關鍵點：強制瀏覽器在請求中攜帶 Cookie
+        //         }); // 詢問後端身分
+        //         if (response.ok) {
+        //             const user = await response.json();
+        //             // 登入成功：更換「登入/註冊」按鈕為「使用者名稱 + 登出」
+        //             loginBtn.parentElement.innerHTML = `
+        //         <span style="color: white; font-size: 0.9rem;">
+        //             Hi, ${user.username}
+        //         </span>
+        //         <a href="cart.html">購物車 <span id="cartCount">0</span></a>
+        //         <a href="orders.html">我的訂單</a>
+        //         <a href="#" onclick="handleLogout()">登出</a>
+        //     `;
+        //             updateCartBadge()
+        //         }
+        //     } catch (error) {
+        //         // 未登入，保持原狀（顯示 登入/註冊）
+        //     }
+        // }
 
         // 處理登出
-        async function handleLogout() {
-            await fetch('/api/logout', { method: 'POST' }); // 呼叫 Spring Security 的預設登出
-            window.location.reload(); // 重新整理頁面
-        }
+        // async function handleLogout() {
+        //     await fetch('/api/logout', { method: 'POST' }); // 呼叫 Spring Security 的預設登出
+        //     window.location.reload(); // 重新整理頁面
+        // }
 
     </script>
-
+    <script src="js/navbar.js"></script>
 </body>
 
 </html>

@@ -190,14 +190,7 @@
 
 <body>
 
-    <header>
-        <h1 onclick="window.location.href='index.html'">幻象書屋</h1>
-        <nav class="nav-links">
-            <a href="index.html">首頁</a>
-            <a href="cart.html">購物車</a>
-            <a href="#" onclick="handleLogout()">登出</a>
-        </nav>
-    </header>
+    <header id="global-header"></header>
 
     <div class="container">
         <h2>我的購買紀錄</h2>
@@ -295,12 +288,9 @@
             }
         }
 
-        async function handleLogout() {
-            await fetch('/logout', { method: 'POST' });
-            window.location.href = 'index.html';
-        }
-    </script>
 
+    </script>
+    <script src="js/navbar.js"></script>
 </body>
 
 </html>
