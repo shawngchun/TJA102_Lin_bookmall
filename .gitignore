@@ -41,7 +41,7 @@ Thumbs.db
 *.pem
 application.properties
 src/main/resources/application.properties
-
+src/main/resources/static/images/*
 # 使用者上傳的檔案
 uploaded-files/
 
