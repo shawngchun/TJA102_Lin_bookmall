@@ -45,10 +45,11 @@ public class CartController {
 
     // 2. 查看我的購物車
     // GET http://localhost:8080/api/cart
-//    @GetMapping
-//    public Map<Object, Object> getMyCart(@AuthenticationPrincipal UserDetails userDetails) {
-//        return cartService.getCart(userDetails.getUsername());
-//    }
+    @GetMapping
+    public List<CartItemDto> getMyFullCart(Principal principal) {
+    	// 這裡從UserDetails拿的username實際上是BkmlUser的email
+    	return cartService.getCartDetails(principal.getName());
+    }
 
     // 3. 從購物車移除商品
     // DELETE http://localhost:8080/api/cart/remove/{bookId}
@@ -60,12 +61,6 @@ public class CartController {
     	// 這裡從UserDetails拿的username實際上是BkmlUser的email
         cartService.removeFromCart(principal.getName(), bookId);
         return Map.of("message", "已移除書籍 " + bookId);
-    }
-    
-    @GetMapping
-    public List<CartItemDto> getMyFullCart(Principal principal) {
-    	// 這裡從UserDetails拿的username實際上是BkmlUser的email
-        return cartService.getCartDetails(principal.getName());
     }
     
     @GetMapping("/count")

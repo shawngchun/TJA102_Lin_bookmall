@@ -30,11 +30,11 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     // 如果不考慮狀態，只查日期區間
     Page<Order> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end, Pageable pageable);
     
- // 透過 userId 尋找最新的一筆訂單 (依 id 降序排列)
+    // 透過 userId 尋找最新的一筆訂單 (依 id 降序排列)
     // Spring Data JPA 會自動解析為：SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC LIMIT 1
     Optional<Order> findFirstByUserIdOrderByIdDesc(Integer userId);
     
- // 使用 OrderByIdDesc，ID 越大代表越新，排在越前面
+    // 使用 OrderByIdDesc，ID 越大代表越新，排在越前面
     List<Order> findAllByUserIdOrderByIdDesc(Integer userId);
     
     Optional<Order> findByIdAndUserId(Integer id, Integer userId);

@@ -38,22 +38,6 @@ public class OrderController {
         Order order = orderService.checkout(principal.getName(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(order);
     }
-
-//    @PostMapping("/checkout")
-//    public ResponseEntity<?> checkout(
-//            @AuthenticationPrincipal UserDetails userDetails,
-//            @RequestBody CheckoutRequest request) {
-//        try {
-//            Order order = orderService.checkout(userDetails.getUsername(), request);
-//            return ResponseEntity.ok(Map.of(
-//                "message", "結帳成功",
-//                "orderId", order.getId(),
-//                "total", order.getTotalAmount()
-//            ));
-//        } catch (RuntimeException e) {
-//            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
-//        }
-//    }
     
     @GetMapping("/my")
     public ResponseEntity<List<Order>> getMyOrders(java.security.Principal principal) {
@@ -86,33 +70,12 @@ public class OrderController {
         
         return ResponseEntity.ok(orderDto);
     }
-
-//    @GetMapping("/my")
-//    public ResponseEntity<List<Order>> getMyOrders(@AuthenticationPrincipal UserDetails userDetails) {
-//        return ResponseEntity.ok(orderService.getUserOrders(userDetails.getUsername()));
-//    }
-
-//    @PostMapping("/{orderId}/pay")
-//    public ResponseEntity<?> payOrder(@PathVariable Integer orderId) {
-//        try {
-//            orderService.payOrder(orderId);
-//            return ResponseEntity.ok(Map.of("message", "付款成功"));
-//        } catch (RuntimeException e) {
-//            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
-//        }
-//    }
     
     @GetMapping(value = "/{orderId}/pay", produces = "text/html")
     public String payOrder(@PathVariable Integer orderId) {
         // 這裡改為呼叫產生金流表單的邏輯
         return orderService.generatePaymentForm(orderId);
     }
-    
-//    @PostMapping("/success")
-//    public void handlePaymentSuccess(HttpServletResponse response) throws IOException {
-//        // 強制瀏覽器重導向到靜態頁面
-//        response.sendRedirect("/paysuccess.html");
-//    }
     
     @PostMapping("/success")
     public void handlePaymentSuccess(HttpServletRequest request, HttpServletResponse response) throws IOException {

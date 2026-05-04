@@ -41,6 +41,7 @@ public class AdminOrderController {
         return ResponseEntity.ok(adminOrderService.getOrdersByCondition(start, end, status, pageable));
     }
     
+    // 1. 取得所有人的訂單列表
     @GetMapping
     public ResponseEntity<Page<Order>> listAllOrders(
             @RequestParam(required = false) Integer status, // 非必填
@@ -48,19 +49,6 @@ public class AdminOrderController {
         
         return ResponseEntity.ok(adminOrderService.getAllOrders(status, pageable));
     }
-    
-//    @GetMapping
-//    public ResponseEntity<Page<Order>> listAllOrders(
-//            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
-//        // @PageableDefault 預設每頁 10 筆，並依 ID 降序排列（最新訂單在最前面）
-//        return ResponseEntity.ok(adminOrderService.getAllOrders(pageable));
-//    }
-
-    // 1. 取得所有人的訂單列表
-//    @GetMapping
-//    public ResponseEntity<List<Order>> listAllOrders() {
-//        return ResponseEntity.ok(adminOrderService.getAllOrders());
-//    }
 
     // 2. 查詢特定訂單詳情
     @GetMapping("/{id}")

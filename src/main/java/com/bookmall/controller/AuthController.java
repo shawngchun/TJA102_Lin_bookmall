@@ -44,11 +44,6 @@ public class AuthController {
     /**
      * 登入：手動呼叫認證
      */
-//    @PostMapping("/login")
-//    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request, HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
-//        return ResponseEntity.ok(authService.login(request, servletRequest, servletResponse));
-//    }
-    
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
         @RequestBody LoginRequest request, 

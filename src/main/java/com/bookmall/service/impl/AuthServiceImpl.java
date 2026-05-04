@@ -8,7 +8,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Service;
 
 import com.bookmall.dto.AuthResponse;
@@ -30,10 +29,6 @@ public class AuthServiceImpl implements AuthService {
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 	
-	// 新增注入
-	@Autowired
-	private SecurityContextRepository securityContextRepository;
-	
 	@Autowired
 	private EmailService emailService; // 注入新建立的服務
 
@@ -54,44 +49,7 @@ public class AuthServiceImpl implements AuthService {
 		userRepository.save(user);
 		return new AuthResponse("註冊成功！", true, user.getUsername());
 	}
-
-//	@Override
-//	public AuthResponse login(LoginRequest request) {
-//		// 1. 將前端傳來的帳密封裝成 Authentication 標記 (尚未認證)
-//		UsernamePasswordAuthenticationToken unauthenticatedToken = new UsernamePasswordAuthenticationToken(
-//				request.getEmail(), request.getPassword());
-//
-//		// 2. 手動委派給主管 (AuthenticationManager) 進行認證
-//		// 此步驟會自動呼叫 UserDetailsService 與 PasswordEncoder 進行比對
-//		Authentication authentication = authenticationManager.authenticate(unauthenticatedToken);
-//
-//		// 3. 認證成功後，將結果存入 SecurityContextHolder
-//		// 這是手動模式下讓 Session 生效的關鍵步驟
-//		SecurityContextHolder.getContext().setAuthentication(authentication);
-//
-//		return new AuthResponse("登入成功", true, authentication.getName());
-//	}
 	
-//	@Override
-//	public AuthResponse login(LoginRequest request, HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
-//		// 1. 認證
-//        Authentication authentication = authenticationManager.authenticate(
-//            new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-//        );
-//
-//        // 2. 設定 Context
-//        SecurityContext context = SecurityContextHolder.createEmptyContext();
-//        context.setAuthentication(authentication);
-//        SecurityContextHolder.setContext(context);
-//
-//        // 3. 儲存 Context 到 Session
-//        // 這步會讓 JSESSIONID 與目前的認證資訊綁定
-//        securityContextRepository.saveContext(context, servletRequest, servletResponse);
-//
-//        return new AuthResponse("登入成功", true, authentication.getName());
-//	}
-	
-
 	    @Override
 	    public Authentication authenticate(String email, String password) {
 	        // Service 只要負責「確認這個人是真的」
@@ -100,25 +58,6 @@ public class AuthServiceImpl implements AuthService {
 	            new UsernamePasswordAuthenticationToken(email, password)
 	        );
 	    }
-	
-
-//	@Override
-//	public AuthResponse processForgotPassword(String email) {
-//		return userRepository.findByEmail(email).map(user -> {
-//	        // 1. 產生 UUID 作為 Token
-//	        String token = UUID.randomUUID().toString();
-//	        user.setResetToken(token);
-//	        
-//	        // 2. 設定過期時間 (例如 15 分鐘後)
-//	        user.setTokenExpiration(LocalDateTime.now().plusMinutes(15));
-//	        userRepository.save(user);
-//
-//	        // TODO: 串接 EmailService 寄送包含此 token 的連結
-//	        System.out.println("重設連結為: /reset-password.html?token=" + token);
-//	        
-//	        return new AuthResponse("重設連結已寄至信箱", true);
-//	    }).orElse(new AuthResponse("找不到此 Email 關聯的帳號", false));
-//	}
 
 	    @Override
 	    public AuthResponse processForgotPassword(String email) {
