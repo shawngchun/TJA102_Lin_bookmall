@@ -33,7 +33,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
             	// 開放首頁、靜態資源與所有 API 認證接口 (包含忘記密碼)
-                .requestMatchers("/", "/login.html", "/register.html", "/successRegister.html", "/index.html", "/static/**", "/css/**", "/js/**", "/forgot-password.html", "/reset-password.html").permitAll()
+                .requestMatchers("/", "/login.html", "/register.html", "/successRegister.html", "/index.html", "/static/**", "/css/**", "/js/**", "/images/google.png", "/forgot-password.html", "/reset-password.html").permitAll()
                 .requestMatchers("/api/auth/**", "/api/payment/callback", "/api/auth/forgot-password", "/api/books/**", "/api/categories/**").permitAll()
                 .requestMatchers("/orders/success").permitAll() // 允許綠界跳轉回來
                 .requestMatchers("/api/payment/callback").permitAll() // 允許綠界 Server 通知

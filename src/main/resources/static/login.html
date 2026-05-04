@@ -220,7 +220,7 @@
 
         <div class="oauth-links">
             <a href="/oauth2/authorization/google" class="oauth-btn">
-                <img src="https://www.svgrepo.com/show/355037/google.svg" alt="Google">
+                <img src="images/google.png" alt="Google">
                 使用 Google 繼續
             </a>
         </div>
@@ -269,7 +269,7 @@
                 // 1. 取得資料並封裝成物件 (注意：欄位名稱需與後端 LoginRequest 一致)
                 const formData = new FormData(loginForm);
                 const data = {
-                    email: formData.get('email'), // 你提到信箱即帳號，對應 LoginRequest 的 email 欄位
+                    email: formData.get('email'),
                     password: formData.get('password')
                 };
 
