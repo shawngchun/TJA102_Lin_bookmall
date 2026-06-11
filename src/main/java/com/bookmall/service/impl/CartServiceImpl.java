@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -29,6 +30,7 @@ public class CartServiceImpl implements CartService {
         String key = CART_PREFIX + username;
         // 使用 Redis Hash：HINCRBY (如果書已存在，數量累加)
         redisTemplate.opsForHash().increment(key, String.valueOf(bookId), quantity);
+        redisTemplate.expire(key, 7, TimeUnit.DAYS);
     }
 
     @Override
