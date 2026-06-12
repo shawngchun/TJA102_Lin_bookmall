@@ -41,15 +41,16 @@ public class EcpayUtils {
             // 先進行標準編碼
             String encoded = URLEncoder.encode(str, StandardCharsets.UTF_8.toString());
 
-            // 僅還原綠界指定的 7 種符號
+            // 轉換綠界指定的 8 種符號
             // 注意：不還原 /、:、=、&
             return encoded.replace("%2D", "-").replace("%2d", "-")
                           .replace("%5F", "_").replace("%5f", "_")
                           .replace("%2E", ".").replace("%2e", ".")
-                          .replace("%21", "!").replace("%21", "!")
+                          .replace("%21", "!")
                           .replace("%2A", "*").replace("%2a", "*")
-                          .replace("%28", "(").replace("%28", "(")
-                          .replace("%29", ")").replace("%29", ")");
+                          .replace("%28", "(")
+                          .replace("%29", ")")
+                          .replace("%20", "+");
         } catch (Exception e) {
             throw new RuntimeException("Encoding failed", e);
         }
